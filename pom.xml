@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>infs7410.project1</groupId>
+    <artifactId>Project1</artifactId>
+    <version>1.0</version>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.release>1.8</maven.compiler.release>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.terrier</groupId>
+            <artifactId>terrier-core</artifactId>
+            <version>5.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.terrier</groupId>
+            <artifactId>terrier-batch-indexers</artifactId>
+            <version>5.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.terrier</groupId>
+            <artifactId>terrier-batch-retrieval</artifactId>
+            <version>5.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+
+                <configuration>
+                    <mainClass>infs7410.project1.Project1</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+
+    </build>
+</project>

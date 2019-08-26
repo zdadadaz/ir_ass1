@@ -1,0 +1,8 @@
+*.res
+*.eval
+*.pdf
+eval/*
+fusion/*
+target/*
+*.txt
+var/*
