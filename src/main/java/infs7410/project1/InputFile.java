@@ -20,8 +20,7 @@ public class InputFile {
         this.output = new ArrayList<topicInfo>();
         File[] files = new File(foldername).listFiles();
         stopwords = new HashSet<String> ();
-
-
+        readStopword();
 
         //If this pathname does not denote a directory, then listFiles() returns null.
         this.fileSize = files.length;

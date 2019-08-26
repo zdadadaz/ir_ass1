@@ -56,12 +56,7 @@ public class Fusion_run {
                 // Fuse the results together and write the new results list to disk.
                 fusedResults.getTrecResults().addAll(fusion.Fuse(topicResults).getTrecResults());
             }
-//            String outputFilename = "";
-//            for (String s : filenames) {
-//                outputFilename += s;
-//            }
-//            logger.info("writing results to disk");
             fusedResults.setRunName("fused");
-            fusedResults.write(outName);
+            fusedResults.write_noAppend(outName);
     }
 }

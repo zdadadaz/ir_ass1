@@ -26,7 +26,7 @@ public class Reranker {
 
         // Iterate over all query terms.
         for (String queryTerm : queryTerms) {
-            System.out.println(queryTerm);
+//            System.out.println(queryTerm);
             // Get the lexicon entry for the term.
             LexiconEntry entry = lex.getLexiconEntry(queryTerm);
             if (entry == null) {

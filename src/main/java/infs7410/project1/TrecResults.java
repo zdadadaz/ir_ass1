@@ -76,6 +76,14 @@ public class TrecResults {
         os.flush();
         os.close();
     }
+    public void write_noAppend(String filename) throws IOException {
+        OutputStream os = new FileOutputStream(filename);
+        for (TrecResult result : trecResults) {
+            os.write(String.format("%s\n", result.toString()).getBytes());
+        }
+        os.flush();
+        os.close();
+    }
 
     private TrecResult splitLine(String line) {
         String[] parts = line.split("\\s+");
