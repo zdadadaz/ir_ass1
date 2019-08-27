@@ -6,3 +6,4 @@ fusion/*
 target/*
 *.txt
 var/*
+*.out

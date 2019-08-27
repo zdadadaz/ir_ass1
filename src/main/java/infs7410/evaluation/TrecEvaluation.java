@@ -16,10 +16,10 @@ public class TrecEvaluation {
         this.measures = new HashSet<>();
         this.topics = new HashMap<>();
 
-
         InputStream is = new FileInputStream(filename);
         BufferedReader buf = new BufferedReader((new InputStreamReader(is)));
 
+//        System.out.println(filename);
 
         String line = buf.readLine();
         while (line != null) {

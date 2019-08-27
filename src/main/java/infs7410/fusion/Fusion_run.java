@@ -7,11 +7,25 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
-
+/**
+ * Fusion_run - Run fusion algorithm
+ * @author Chien-chi chen
+ */
 public class Fusion_run {
+    /**
+     * Filename list for fusion
+     */
     private List<String> filenames;
+    /**
+     * Fusion result list
+     */
     private List<TrecResults> results;
-
+    /**
+     * Add filename list into private variable
+     *
+     * @param resultFilenames Input query path
+     * @require {@code resultFilenames != null}
+     */
     public Fusion_run(List<String> resultFilenames) throws IOException {
         filenames = new ArrayList<String>(resultFilenames);
         results = new ArrayList<TrecResults>(resultFilenames.size());
@@ -20,6 +34,14 @@ public class Fusion_run {
             results.add(new TrecResults(filename));
         }
     }
+    /**
+     * Do fusion algorithm according to Algorithm
+     *
+     * @param algorithm Input query path
+     * @param normFlag True or False for normilization
+     * @param outName output path for fusion result
+     * @require {@code algorithm != null, normFlag != null,outName != null}
+     */
     public void Fusion_do(String algorithm, Boolean normFlag, String outName) throws IOException {
 
             Normaliser norm = new MinMax();

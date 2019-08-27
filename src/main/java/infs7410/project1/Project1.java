@@ -4,57 +4,91 @@ import infs7410.fusion.Fusion_run;
 import infs7410.ranking.BM25;
 import infs7410.util.topicInfo;
 import infs7410.evaluation.evalution;
-import org.terrier.matching.models.basicmodel.In;
 import org.terrier.structures.Index;
 import org.terrier.matching.models.WeightingModel;
-import java.util.Timer;
+
 import infs7410.evaluation.stateTest;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-
+/**
+ * main function - Run training, testing, evaluation and T-test
+ * @author Chien-chi chen
+ */
 public class Project1 {
     public static void main(String[] args) throws Exception {
         String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-        long startTime = System.nanoTime();
+        File file;
 
-//      ====   Training ====
-        String path = dirPath + "tar/2017-TAR/training/topics/";
-        Double [] coef = {0.25,0.5,0.75,1.0};
-        training(path, "bm25", "./train/" + "bm25.res", coef);
-        long stopTime = System.nanoTime();
-        System.out.println(stopTime - startTime);
+        /**
+         * Choose case and year
+         * Case: train or test
+         * year: 2017 or 2018
+         */
+        String Case = "train";
+        String year ="2017";
 
+        /**
+         * Training
+         * input: path: indexin path, outName: out put path name
+         * output: training res
+         */
+        file = new File("./" + Case +"/");
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
+        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
+        Double [] coef = {1.0};
+        training(path, "tfidf", "./"+Case+"/" + "tfidf.res", coef);
+//        training(path, "bm25", "./"+Case+"/" + "bm25.res", coefbm25);
 
-//      ===== fusion ====
-//        fusion_main();
+       /**
+         * fusion
+         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
+         * output: result of fusion for three methods.
+         */
+        String qrels  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/tar/"+year+"-TAR/"+Case+"ing/qrels/"+year+"-qrel_abs_test.qrels.txt";
+//        String trainSet = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/"+year+"/";
+//        String fusionPath  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/";
+//        fusion_main(qrels,trainSet,fusionPath);
 
+        /**
+         * evaluation for map and udcg
+         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
+         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
+         */
+        String inputFolder = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/";
+//        evalution_set(qrels, inputFolder);
 
-//      ==== evaluation ===
-//      Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
-//      Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
-//        String qrels  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/tar/2017-TAR/testing/qrels/2017-qrel_abs_test.qrels.txt";
-//        String inputFolder = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/fusion/";
-//        String outputFolder = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/eval/";
-//        evalution_set(qrels, inputFolder,outputFolder);
-
-//      ==== Ttest ====
-//      input: folder contains eval, output path
-//      output: write p value out.
-//        String foldername = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/eval/eval/";
-//        String outPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/eval/stat/fusion.stat";
+       /**
+         * T-test
+         * input: folder contains eval, output path
+         * output: write p value out.
+         */
+        file = new File("./"+Case+"/stat");
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        String foldername = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/eval/";
+        String outPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/stat/"+Case+".stat";
 //        evalution_stat( foldername, outPath);
 
-
     }
+    /**
+     * Training Bm25 algorithm
+     *
+     * @param path Indexing path
+     * @param RunName Run Name
+     * @param outName output result name
+     * @param coef array of adjust coeficient if exist
+     * @require {@code path != null,RunName != null,outName != null, coef != null}
+     */
     public static void training(String path, String RunName, String outName, Double [] coef) throws IOException {
-//       ==== Training =====
         Index index = Index.createIndex("./var/index", "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
@@ -95,8 +129,14 @@ public class Project1 {
         }
 
     }
-
-    public static void fusion_main() throws IOException {
+    /**
+     * Training fusion algorithm initialization
+     *
+     * @param qrels The file path of ground truth
+     * @param trainSet Traing set folder path
+     * @require {@code qrels != null,trainSet != null}
+     */
+    public static void fusion_main(String qrels, String trainSet, String fusionPath) throws IOException {
         List<String> resultFilenames = new ArrayList<>();
         List<String> FilenamesList = new ArrayList<>();
 
@@ -109,17 +149,19 @@ public class Project1 {
         String file7 = "Sheffield3.res";
         String file8 = "Sheffield4.res";
 
-        String Alg = "combmnz";
 
-        String fusionPath  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/fusion/";
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file1);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file2);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file3);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file4);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file5);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file6);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file7);
-        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/" + file8);
+//      == choose algorithm ==
+        String[] Alg = {"borda","combsum","combmnz"};
+
+//      == assign input filename
+        resultFilenames.add(trainSet + file1);
+        resultFilenames.add(trainSet + file2);
+        resultFilenames.add(trainSet + file3);
+        resultFilenames.add(trainSet + file4);
+        resultFilenames.add(trainSet + file5);
+        resultFilenames.add(trainSet + file6);
+        resultFilenames.add(trainSet + file7);
+        resultFilenames.add(trainSet + file8);
 
         FilenamesList.add(file1);
         FilenamesList.add(file2);
@@ -130,24 +172,28 @@ public class Project1 {
         FilenamesList.add(file7);
         FilenamesList.add(file8);
 
-        String qrels  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/tar/2017-TAR/testing/qrels/2017-qrel_abs_test.qrels.txt";
-        fusion_comb(resultFilenames,FilenamesList,fusionPath, Alg, qrels);
+        File file = new File(fusionPath);
+        if(!file.exists()){
+            file.mkdirs();
+        }
+
+        for (String a:Alg){
+            fusion_comb(resultFilenames,FilenamesList,fusionPath, a, qrels);
+        }
+
     }
-
+    /**
+     * Training fusion algorithm with greedy selection
+     *
+     * @param resultFilenamesPath The file path of prepared for fusion
+     * @param FilenamesList The file name of prepared for fusion
+     * @param dirPAhh output diretory path
+     * @param Alg fusion algorithm
+     * @param qrels The file path of ground truth
+     * @require {@code resultFilenamesPath != null,FilenamesList != null,dirPAhh != null,Alg != null, qrels != null}
+     */
     public static void fusion_comb(List<String> resultFilenamesPath, List<String> FilenamesList,String dirPAhh, String Alg,String qrels ) throws IOException {
-//                =======  fusion  ======
-//        List<String> resultFilenames = new ArrayList<>();
-//        resultFilenames.clear();
-//        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/Test_Data_Sheffield-run-4.res");
-//        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/2017/result_bool_es_test.res");
-//        InputStream is = new FileInputStream(resultFilenames.get(0));
-//        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w5/tutorial-5/runs/ECNU_TASK2_RUN1_TFIDF.task2.res");
-//        resultFilenames.add("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w5/tutorial-5/runs/sheffield-general_terms.task2.res");
-//        String outputName = "test.res";
-
-
 //      ==== greedy selection ====
-//        String qrels  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/tar/2017-TAR/testing/qrels/2017-qrel_abs_test.qrels.txt";
         List<String> inputList = new ArrayList<>(resultFilenamesPath);
         List<String> greedyList = new ArrayList<>();
         String outputTmp = "./tmp.res";
@@ -157,7 +203,7 @@ public class Project1 {
                 List<String> iteList = new ArrayList<>(greedyList);
                 iteList.add(i);
                 Fusion_run fusion1 = new Fusion_run(iteList);
-                fusion1.Fusion_do(Alg,Boolean.FALSE,outputTmp );
+                fusion1.Fusion_do(Alg,Boolean.TRUE,outputTmp );
                 evalution eval = new evalution(qrels,outputTmp);
                 Double map = eval.eval_map();
                 mapList.add(map);
@@ -175,7 +221,6 @@ public class Project1 {
 
         }
 
-//        System.out.println(greedyList);
         //      ===  do one increment only based on greedy list ===
         inputList.clear();
         StringBuilder outputNameTmp  = new StringBuilder();
@@ -186,51 +231,63 @@ public class Project1 {
             inputList.add(greedyList.get(i));
             outputNameTmp.append(FilenamesList.get(i).substring(0,FilenamesList.get(i).length()-4) + "_");
             Fusion_run fusion1 = new Fusion_run(inputList);
-            fusion1.Fusion_do(Alg,Boolean.FALSE,dirPAhh + Alg + "_" + outputNameTmp.toString() + ".res" );
+            fusion1.Fusion_do(Alg,Boolean.TRUE,dirPAhh + Alg + "_" + outputNameTmp.toString() + ".res" );
         }
 
     }
-
-    public static void evalution_set(String qrels, String foldername, String outputfolder) throws IOException {
-        //        ======= evaluation =====
-//        String qrels = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w2/tutorial-2/exercise-1+2/task1.test.abs.qrels";
-//        String res = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w2/tutorial-2/exercise-1+2/sheffield-bm25.res";
-//        String outPath = "./out.eval";
-//        String outputEvalset = "./eval/" + "sheffield4_booles" +  "_borda"+".set";
-//        String outputEvalq = "./eval/" + "sheffield4_booles" +  "_borda"+".eval";
+    /**
+     * Evaluation for precision/recall, map, udcg
+     *
+     * @param qrels The file path of ground truth
+     * @param foldername folder prepare for evaluation
+     * @require {@code qrels != null,foldername != null,outputfolder != null}
+     */
+    public static void evalution_set(String qrels, String foldername) throws IOException {
+        File filec = new File(foldername +"set/");
+        if(!filec.exists()){
+            filec.mkdirs();
+        }
+        filec = new File(foldername +"eval/");
+        if(!filec.exists()){
+            filec.mkdirs();
+        }
 
 
         File[] files = new File(foldername).listFiles();
 
+//        String testfile = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/train/tfidf.res";
+//        String inputFile = stateTest.extractfilename(testfile);
+//        evalution eval = new evalution(qrels,testfile);
+//        eval.eval_PR_map_udcq(foldername.toString() +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
+//        eval.eval_q_map_udcg(foldername.toString() +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
+
         for (File file : files) {
             if (file.isFile()) {
-                String inputFile = (file.getName());
-//                System.out.println(inputFile);
-                evalution eval = new evalution(qrels,file.getAbsolutePath());
-                eval.eval_PR_map_udcq(outputfolder +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
-                eval.eval_q_map_udcg(outputfolder +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
+                if(!file.getName().substring(0,1).equals(".") && file.getName().endsWith(".res")){
+                    String inputFile = (file.getName());
+                    evalution eval = new evalution(qrels,file.getAbsolutePath());
+                    eval.eval_PR_map_udcq(foldername +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
+                    eval.eval_q_map_udcg(foldername +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
+                }
             }
         }
 
 
     }
-
+    /**
+     * Evaluation for T-test
+     *
+     * @param foldername The folder path for T-test
+     * @param outPath output path for T-test
+     * @require {@code foldername != null,outPath != null}
+     */
     public static void evalution_stat(String foldername ,String outPath) throws Exception {
-        //      ===== statistical test ====
-//        List<String> statTest = new ArrayList<>();
-//        String eval1 = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w2/tutorial-2/exercise-1+2/sheffield-bm25.eval";
-//        String eval2 = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w2/tutorial-2/exercise-1+2/ECNU_RUN1_BM25.eval";
-//        String eval3 = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/w2/tutorial-2/exercise-1+2/sheffield-boolean.eval";
-//        statTest.add(eval1);
-//        statTest.add(eval2);
-//        statTest.add(eval3);
-
         List<String>  testList = new ArrayList<>();
         File[] files = new File(foldername).listFiles();
         stateTest tTest = new stateTest();
         for (File file : files) {
             String tmp = file.getName();
-            if (!tmp.substring(1,5).equals("DS_S")) {
+            if (!tmp.substring(0,1).equals(".")) {
                 testList.add(file.getAbsolutePath());
             }
         }
