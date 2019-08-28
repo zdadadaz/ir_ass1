@@ -45,8 +45,8 @@ public class evalution {
     public void eval_PR_map_udcq(String outPath) throws IOException {
         StringBuilder PR = this.eval_PR(outPath);
         StringBuilder mapUdcg = this.eval_map_udcg(outPath);
-        System.out.println(PR.toString());
-        System.out.println(mapUdcg.toString());
+//        System.out.println(PR.toString());
+//        System.out.println(mapUdcg.toString());
 
         PR.append(mapUdcg);
         this.write(PR,outPath);
@@ -74,9 +74,9 @@ public class evalution {
      */
     public StringBuilder eval_PR(String outPath) {
         StringBuilder output = new StringBuilder();
-        System.out.println(this.qrels);
-        System.out.println(this.res);
-        String cmd = this.trec_eval + " -m set " + this.qrels + " " + this.res + " >test.out";
+//        System.out.println(this.qrels);
+//        System.out.println(this.res);
+        String cmd = this.trec_eval + " -m set " + this.qrels + " " + this.res;
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command("bash", "-c", cmd);
         try {
@@ -89,6 +89,8 @@ public class evalution {
         } catch (IOException e) {
             e.printStackTrace();
         }
+//        System.out.println(output);
+
         return output;
     }
     /**

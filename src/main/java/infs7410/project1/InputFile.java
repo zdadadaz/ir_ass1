@@ -15,7 +15,6 @@ public class InputFile {
      * A list of Topic info including topic, title, query and docid
      */
     private ArrayList<topicInfo> output;
-    private Integer fileSize;
     /**
      * A set of stop word for detection
      */
@@ -25,7 +24,7 @@ public class InputFile {
         return this.output.get(i);
     }
     public Integer getFileSize() {
-        return this.fileSize;
+        return this.output.size();
     }
 
     /**
@@ -41,7 +40,6 @@ public class InputFile {
         readStopword();
 
         //If this pathname does not denote a directory, then listFiles() returns null.
-        this.fileSize = files.length;
 
         for (File file : files) {
             if (file.isFile()) {
@@ -85,7 +83,8 @@ public class InputFile {
                 flag = 1;
                 String[] tmp = parts[1].split(" ");
                 for (String s : tmp) {
-                    if (!this.stopwords.contains(s)) {
+                    s = s.replaceAll("[^a-zA-Z0-9]", "");
+                    if (!this.stopwords.contains(s) && !s.isEmpty()) {
                         s = ps.stem(s);
                         titles.add(s);
                     }

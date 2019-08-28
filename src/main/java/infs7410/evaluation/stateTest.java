@@ -2,7 +2,9 @@ package infs7410.evaluation;
 
 import org.apache.commons.math3.stat.inference.TTest;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +29,10 @@ public class stateTest {
      */
     public double []  statistical_test(String filename1, String filename2) throws Exception {
         // Open the two files and extract the topics and measures from the eval files.
+
         TrecEvaluation file1 = new TrecEvaluation(filename1);
         TrecEvaluation file2 = new TrecEvaluation(filename2);
+
         double [] pvalueArr = new double [measure.length];
 
         for (int i =0; i<measure.length;i++){
@@ -36,16 +40,9 @@ public class stateTest {
             double[] scores1 = file1.getScoresForMeasure(measure[i]);
             double[] scores2 = file2.getScoresForMeasure(measure[i]);
 
-//            System.out.println(scores1.length);
-//            System.out.println(scores2.length);
-
             // Create a new TTest object to perform significance testing.
             TTest tTest = new TTest();
-
             double pvalue = tTest.pairedTTest(scores1, scores2);
-
-//            System.out.println(pvalue);
-
 
             pvalueArr[i] = pvalue;
 

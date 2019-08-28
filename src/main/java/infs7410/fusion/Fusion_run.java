@@ -78,7 +78,7 @@ public class Fusion_run {
                 // Fuse the results together and write the new results list to disk.
                 fusedResults.getTrecResults().addAll(fusion.Fuse(topicResults).getTrecResults());
             }
-            fusedResults.setRunName("fused");
+            fusedResults.setRunName(algorithm);
             fusedResults.write_noAppend(outName);
     }
 }

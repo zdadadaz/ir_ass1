@@ -7,3 +7,4 @@ target/*
 *.txt
 var/*
 *.out
+train/
