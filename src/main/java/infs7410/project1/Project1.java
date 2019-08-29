@@ -4,6 +4,7 @@ import infs7410.fusion.Fusion_run;
 import infs7410.ranking.BM25;
 import infs7410.util.topicInfo;
 import infs7410.evaluation.evalution;
+import org.apache.log4j.BasicConfigurator;
 import org.terrier.structures.Index;
 import org.terrier.matching.models.WeightingModel;
 import org.apache.commons.io.FileUtils;
@@ -26,73 +27,74 @@ import org.terrier.terms.PorterStemmer;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+        String indexPath = "./var/index";
         File file;
+        BasicConfigurator.configure();
+        /**
+         * Choose case and year for training and testing in different years
+         * Case: train or test
+         * year: 2017 or 2018
+         */
+        String Case = "train";
+        String year ="2018";
 
-//        /**
-//         * Choose case and year for training and testing in different years
-//         * Case: train or test
-//         * year: 2017 or 2018
-//         */
-//        String Case = "train";
-//        String year ="2018";
-//
-//        /**
-//         * Training
-//         * input: path: indexin path, outName: out put path name
-//         * output: training res
-//         */
-//        String yearCasefolder = year+Case;
-//        file = new File("./" + yearCasefolder +"/");
-////        if(!file.exists()){
-////            FileUtils.deleteDirectory(new File("./" + Case +"/"));
-////            file.mkdirs();
-////        }
-//        File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
-//        String qrels = "";
-//        for (File f : files){
-//            if (!f.getName().substring(0,1).equals(".")){
-//                qrels = f.getAbsolutePath();
-//            }
-//        }
-//
-//        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-//        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
-//        Double [] coef = {1.0};
-////        training(path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-////        training(path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25);
-//
-//       /**
-//         * fusion
-//         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
-//         * output: result of fusion for three methods.
-//         */
-//        String trainSet = dirPath + "runs/"+year+"/";
-//        String fusionPath  = "./"+yearCasefolder+"/";
-//        if (Case.equals("test")){
-//            fusion_main(qrels,trainSet,fusionPath);
-//        }
-//
-//        /**
-//         * evaluation for map and udcg
-//         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
-//         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
-//         */
-//        String inputFolder = "./"+yearCasefolder+"/";
-//        evalution_set(qrels, inputFolder);
-//
-//       /**
-//         * T-test
-//         * input: folder contains eval, output path
-//         * output: write p value out.
-//         */
-//        file = new File("./"+yearCasefolder+"/stat");
-//        if(!file.exists()){
-//            file.mkdirs();
-//        }
-//        String foldername = "./"+yearCasefolder+"/eval/";
-//        String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
-//        evalution_stat( foldername, outPath);
+        /**
+         * Training
+         * input: path: indexin path, outName: out put path name
+         * output: training res
+         */
+        String yearCasefolder = year+Case;
+        file = new File("./" + yearCasefolder +"/");
+        if(!file.exists()){
+            FileUtils.deleteDirectory(new File("./" + Case +"/"));
+            file.mkdirs();
+        }
+        File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
+        String qrels = "";
+        for (File f : files){
+            if (!f.getName().substring(0,1).equals(".")){
+                qrels = f.getAbsolutePath();
+            }
+        }
+
+        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
+        Double [] coefbm25 = {0.75,1.0};
+        Double [] coef = {1.0};
+        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
+        training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25);
+
+       /**
+         * fusion
+         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
+         * output: result of fusion for three methods.
+         */
+        String trainSet = dirPath + "runs/"+year+"/";
+        String fusionPath  = "./"+yearCasefolder+"/";
+        if (Case.equals("test")){
+            fusion_main(qrels,trainSet,fusionPath);
+        }
+
+        /**
+         * evaluation for map and udcg
+         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
+         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
+         */
+        String inputFolder = "./"+yearCasefolder+"/";
+        evalution_set(qrels, inputFolder);
+
+       /**
+         * T-test
+         * input: folder contains eval, output path
+         * output: write p value out.
+         */
+        file = new File("./"+yearCasefolder+"/stat");
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        String foldername = "./"+yearCasefolder+"/eval/";
+        String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
+        evalution_stat( foldername, outPath);
 
     }
     /**
@@ -104,8 +106,8 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training(String path, String RunName, String outName, Double [] coef) throws IOException {
-        Index index = Index.createIndex("./var/index", "pubmed");
+    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef) throws IOException {
+        Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
 
