@@ -16,78 +16,83 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.terrier.terms.Stopwords;
+import org.terrier.terms.PorterStemmer;
+
 /**
  * main function - Run training, testing, evaluation and T-test
  * @author Chien-chi chen
  */
 public class Project1 {
     public static void main(String[] args) throws Exception {
+//      the path of folder containing runs and tar folders
         String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
         File file;
 
-        /**
-         * Choose case and year for training and testing in different years
-         * Case: train or test
-         * year: 2017 or 2018
-         */
-        String Case = "train";
-        String year ="2017";
-
-        /**
-         * Training
-         * input: path: indexin path, outName: out put path name
-         * output: training res
-         */
-        file = new File("./" + Case +"/");
-        if(!file.exists()){
-            FileUtils.deleteDirectory(new File("./" + Case +"/"));
-            file.mkdirs();
-        }
-        File[] files = new File("/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
-        String qrels = "";
-        for (File f : files){
-            if (!f.getName().substring(0,1).equals(".")){
-                qrels = f.getAbsolutePath();
-            }
-        }
-
-        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
-        Double [] coef = {1.0};
-//        training(path, "tfidf", "./"+Case+"/" + "tfidf.res", coef);
-//        training(path, "bm25", "./"+Case+"/" + "bm25.res", coefbm25);
-
-       /**
-         * fusion
-         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
-         * output: result of fusion for three methods.
-         */
-        String trainSet = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/runs/"+year+"/";
-        String fusionPath  = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/";
-        if (Case.equals("test")){
-            fusion_main(qrels,trainSet,fusionPath);
-        }
-
-        /**
-         * evaluation for map and udcg
-         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
-         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
-         */
-        String inputFolder = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/";
-        evalution_set(qrels, inputFolder);
-
-       /**
-         * T-test
-         * input: folder contains eval, output path
-         * output: write p value out.
-         */
-        file = new File("./"+Case+"/stat");
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        String foldername = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/eval/";
-        String outPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/"+Case+"/stat/"+Case+".stat";
-        evalution_stat( foldername, outPath);
+//        /**
+//         * Choose case and year for training and testing in different years
+//         * Case: train or test
+//         * year: 2017 or 2018
+//         */
+//        String Case = "train";
+//        String year ="2018";
+//
+//        /**
+//         * Training
+//         * input: path: indexin path, outName: out put path name
+//         * output: training res
+//         */
+//        String yearCasefolder = year+Case;
+//        file = new File("./" + yearCasefolder +"/");
+////        if(!file.exists()){
+////            FileUtils.deleteDirectory(new File("./" + Case +"/"));
+////            file.mkdirs();
+////        }
+//        File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
+//        String qrels = "";
+//        for (File f : files){
+//            if (!f.getName().substring(0,1).equals(".")){
+//                qrels = f.getAbsolutePath();
+//            }
+//        }
+//
+//        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
+//        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
+//        Double [] coef = {1.0};
+////        training(path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
+////        training(path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25);
+//
+//       /**
+//         * fusion
+//         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
+//         * output: result of fusion for three methods.
+//         */
+//        String trainSet = dirPath + "runs/"+year+"/";
+//        String fusionPath  = "./"+yearCasefolder+"/";
+//        if (Case.equals("test")){
+//            fusion_main(qrels,trainSet,fusionPath);
+//        }
+//
+//        /**
+//         * evaluation for map and udcg
+//         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
+//         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
+//         */
+//        String inputFolder = "./"+yearCasefolder+"/";
+//        evalution_set(qrels, inputFolder);
+//
+//       /**
+//         * T-test
+//         * input: folder contains eval, output path
+//         * output: write p value out.
+//         */
+//        file = new File("./"+yearCasefolder+"/stat");
+//        if(!file.exists()){
+//            file.mkdirs();
+//        }
+//        String foldername = "./"+yearCasefolder+"/eval/";
+//        String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
+//        evalution_stat( foldername, outPath);
 
     }
     /**
