@@ -31,10 +31,10 @@ public class evalution {
      * @param res Input result path
      * @require {@code qrels != null,res != null}
      */
-    public evalution(String qrels, String res) {
+    public evalution(String qrels, String res, String trec_eval_in) {
         this.qrels = qrels;
         this.res = res;
-        trec_eval = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+        this.trec_eval = trec_eval_in;
     }
     /**
      * calculate precision & recall & map & udcg
@@ -42,15 +42,13 @@ public class evalution {
      * @param outPath outPath of evaluation result.
      * @require {@code outPath != null}
      */
-    public void eval_PR_map_udcq(String outPath) throws IOException {
-        StringBuilder PR = this.eval_PR(outPath);
+    public StringBuilder eval_PR_map_udcq(String outPath) throws IOException {
+//        StringBuilder PR = this.eval_PR(outPath);
         StringBuilder mapUdcg = this.eval_map_udcg(outPath);
-//        System.out.println(PR.toString());
-//        System.out.println(mapUdcg.toString());
-
-        PR.append(mapUdcg);
-        this.write(PR,outPath);
-
+        StringBuilder aa = this.extractInfo(mapUdcg,outPath);
+//        PR.append(mapUdcg);
+//        this.write(PR,outPath);
+        return aa;
     }
     /**
      * Write out evaluation result
@@ -65,6 +63,20 @@ public class evalution {
             writer.write(outs.toString());
         }
     }
+    /**
+     * Write out evaluation result appending
+     *
+     * @param outs evaluation result.
+     * @param outPath outpu  path of evaluation result.
+     * @require {@code outs != null,outPath != null}
+     */
+    public static void write_append(StringBuilder outs,String outPath) throws IOException {
+        OutputStream os = new FileOutputStream(outPath,true);
+        os.write(String.format("%s\n", outs.toString()).getBytes());
+        os.flush();
+        os.close();
+    }
+
     /**
      * Calculate precison and recall
      *
@@ -102,7 +114,7 @@ public class evalution {
      */
     public StringBuilder eval_map_udcg(String outPath) {
         StringBuilder output = new StringBuilder();
-        String cmd = this.trec_eval + " -m map -m ndcg -m ndcg_cut -m P " + this.qrels + " " + this.res;
+        String cmd = this.trec_eval + " -m map -m ndcg -m Rprec " + this.qrels + " " + this.res;
 //        String cmd = this.trec_eval + " -m map -m ndcg -m ndcg_cut -m P " + this.qrels + " " + this.res + " > " + outPath;
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command("bash", "-c", cmd);
@@ -125,7 +137,7 @@ public class evalution {
      * @require {@code outPath != null}
      */
     public void eval_q_map_udcg(String outPath) {
-        String cmd = this.trec_eval + " -q -m map -m ndcg -m ndcg_cut -m P " + this.qrels + " " + this.res + " > " + outPath;
+        String cmd = this.trec_eval + " -q -m map -m ndcg -m Rprec " + this.qrels + " " + this.res + " > " + outPath;
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command("bash", "-c", cmd);
         try {
@@ -162,5 +174,19 @@ public class evalution {
         }
         return output;
     }
+
+    public StringBuilder extractInfo(StringBuilder input, String outputName){
+        String [] outName = outputName.split("/");
+        StringBuilder out = new StringBuilder(outName[outName.length-1] + "\t");
+        String [] strarr = input.toString().split("\n");
+        for (Integer i = 0; i < 3 ; i++){
+            String [] tmp = strarr[i].split("\t");
+            out.append(tmp[tmp.length-1]+"\t");
+        }
+        out.append("\n");
+        return out;
+    }
+
+
 
 }

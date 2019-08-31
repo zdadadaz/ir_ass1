@@ -27,8 +27,12 @@ import org.terrier.terms.PorterStemmer;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+//        String indexPath = "./var/index";
+//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
         String indexPath = "./var/index";
+        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -37,7 +41,7 @@ public class Project1 {
          * year: 2017 or 2018
          */
         String Case = "train";
-        String year ="2017";
+        String year ="2018";
 
         /**
          * Training
@@ -47,7 +51,6 @@ public class Project1 {
         String yearCasefolder = year+Case;
         file = new File("./" + yearCasefolder +"/");
         if(!file.exists()){
-            FileUtils.deleteDirectory(new File("./" + Case +"/"));
             file.mkdirs();
         }
         File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
@@ -57,12 +60,16 @@ public class Project1 {
                 qrels = f.getAbsolutePath();
             }
         }
+        if (qrels.equals("")){
+            throw new RuntimeException("Qrels is not exist");
+        }
 
         String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
-        Double [] coef = {1.0};
-        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-        training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25);
+        Double [] coefbm25 = {0.35,0.45,0.55,0.65,0.75,0.85,0.9};
+        Double [] kcoefbm25 = {0.5,0.7,0.9,1.1,1.2,1.3,1.5,1.7,1.9};
+        //Double [] coef = {1.0};
+//        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
+//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
 
        /**
          * fusion
@@ -72,7 +79,7 @@ public class Project1 {
         String trainSet = dirPath + "runs/"+year+"/";
         String fusionPath  = "./"+yearCasefolder+"/";
         if (Case.equals("test")){
-            fusion_main(qrels,trainSet,fusionPath);
+            fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
         }
 
         /**
@@ -81,7 +88,7 @@ public class Project1 {
          * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
          */
         String inputFolder = "./"+yearCasefolder+"/";
-        evalution_set(qrels, inputFolder);
+        evalution_set(qrels, inputFolder, trec_evalPath);
 
        /**
          * T-test
@@ -127,6 +134,7 @@ public class Project1 {
             StringBuilder outNameTmp = new StringBuilder(outName);
             if (RunName.equals("bm25")){
                 alg.setParameter(c);
+
                 runNameTmp.append("_"+ Double.toString(c));
                 outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
                 outNameTmp.append("_"+ Double.toString(c) + ".res");
@@ -148,13 +156,61 @@ public class Project1 {
 
     }
     /**
+     * Training Bm25 algorithm
+     *
+     * @param path Indexing path
+     * @param RunName Run Name
+     * @param outName output result name
+     * @param coef array of adjust coeficient if exist
+     * @require {@code path != null,RunName != null,outName != null, coef != null}
+     */
+    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk) throws IOException {
+        Index index = Index.createIndex(indexPath, "pubmed");
+        InputFile Alltopic = new InputFile(path);
+        Reranker reranker = new Reranker(index);
+
+        BM25 alg = new BM25();
+
+        for (double c: coef)  {
+            for (double k:coefk){
+                System.out.println("Coeficient : " + Double.toString(c));
+                System.out.println("Coeficient k : " + Double.toString(k));
+
+                StringBuilder runNameTmp = new StringBuilder(RunName);
+                StringBuilder outNameTmp = new StringBuilder(outName);
+
+                alg.setParameter(c);
+                alg.setParameter2(k);
+                runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
+                outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
+                outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k) + ".res");
+
+               for (Integer i=0; i < Alltopic.getFileSize(); i++){
+                    topicInfo tmpTopic = Alltopic.getOutput(i);
+                    System.out.println("filename: "+ tmpTopic.getFilename());
+                    System.out.println("Topic: "+ tmpTopic.getTopic());
+                    System.out.println("Title: "+ tmpTopic.getTitle());
+                    TrecResults results = reranker.rerank(
+                            tmpTopic.getTopic(),
+                            tmpTopic.getTitle(),
+                            tmpTopic.getPid(),
+                            alg);
+                    results.setRunName(runNameTmp.toString()); // "example1"
+                    results.write(outNameTmp.toString()); //"example1.res"
+                }
+            }
+
+        }
+
+    }
+    /**
      * Training fusion algorithm initialization
      *
      * @param qrels The file path of ground truth
      * @param trainSet Traing set folder path
      * @require {@code qrels != null,trainSet != null}
      */
-    public static void fusion_main(String qrels, String trainSet, String fusionPath) throws IOException {
+    public static void fusion_main(String qrels, String trainSet, String fusionPath, String trec_evalPath) throws IOException {
         List<String> resultFilenames = new ArrayList<>();
         List<String> FilenamesList = new ArrayList<>();
 
@@ -204,7 +260,7 @@ public class Project1 {
         }
 
         for (String a:Alg){
-            fusion_comb(resultFilenames,FilenamesList,fusionPath, a, qrels);
+            fusion_comb(resultFilenames,FilenamesList,fusionPath, a, qrels, trec_evalPath);
         }
 
     }
@@ -218,7 +274,7 @@ public class Project1 {
      * @param qrels The file path of ground truth
      * @require {@code resultFilenamesPath != null,FilenamesList != null,dirPAhh != null,Alg != null, qrels != null}
      */
-    public static void fusion_comb(List<String> resultFilenamesPath, List<String> FilenamesList,String dirPAhh, String Alg,String qrels ) throws IOException {
+    public static void fusion_comb(List<String> resultFilenamesPath, List<String> FilenamesList,String dirPAhh, String Alg,String qrels, String trec_evalPath ) throws IOException {
 //      ==== greedy selection ====
         List<String> inputList = new ArrayList<>(resultFilenamesPath);
         List<String> greedyList = new ArrayList<>();
@@ -230,7 +286,7 @@ public class Project1 {
                 iteList.add(i);
                 Fusion_run fusion1 = new Fusion_run(iteList);
                 fusion1.Fusion_do(Alg,Boolean.TRUE,outputTmp );
-                evalution eval = new evalution(qrels,outputTmp);
+                evalution eval = new evalution(qrels,outputTmp,trec_evalPath);
                 Double map = eval.eval_map();
                 mapList.add(map);
             }
@@ -271,10 +327,11 @@ public class Project1 {
      * @param foldername folder prepare for evaluation
      * @require {@code qrels != null,foldername != null,outputfolder != null}
      */
-    public static void evalution_set(String qrels, String foldername) throws IOException {
+    public static void evalution_set(String qrels, String foldername, String trec_evalPath) throws IOException {
         File filec1 = new File(foldername +"set/");
         if(filec1.exists()){
             File[] contents = filec1.listFiles();
+//            System.out.println(contents);
             if (contents != null) {
                 for (File f : contents) {
                     f.delete();
@@ -302,17 +359,27 @@ public class Project1 {
 //        eval.eval_PR_map_udcq(foldername.toString() +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
 //        eval.eval_q_map_udcg(foldername.toString() +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
 
+        StringBuilder head = new StringBuilder();
+        StringBuilder body = new StringBuilder();
+        head.append("name");
+        head.append("\t"+"map");
+        head.append("\t"+"Rprec");
+        head.append("\t"+"ndcg");
+        head.append("\n");
+
         for (File file : files) {
             if (file.isFile()) {
                 if(!file.getName().substring(0,1).equals(".") && file.getName().endsWith(".res")){
                     String inputFile = (file.getName());
-                    evalution eval = new evalution(qrels,file.getAbsolutePath());
-                    eval.eval_PR_map_udcq(foldername +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
+                    evalution eval = new evalution(qrels,file.getAbsolutePath(),trec_evalPath);
+                    StringBuilder tmp = eval.eval_PR_map_udcq(foldername +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
                     eval.eval_q_map_udcg(foldername +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
+                    body.append(tmp);
                 }
             }
         }
-
+        head.append(body);
+        evalution.write_append(head,foldername +"set/" + "summary.set");
 
     }
     /**
@@ -329,7 +396,8 @@ public class Project1 {
         for (File file : files) {
             String tmp = file.getName();
             if (!tmp.substring(0,1).equals(".")) {
-                System.out.println(file.getAbsolutePath());
+                //System.out.println(file.getAbsolutePath());
+                //System.out.println(file.getName());
                 testList.add(file.getAbsolutePath());
             }
         }

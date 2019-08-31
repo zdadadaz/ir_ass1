@@ -8,3 +8,6 @@ target/*
 var/*
 *.out
 train/
+2017/*
+2017train/*
+2018train/*
