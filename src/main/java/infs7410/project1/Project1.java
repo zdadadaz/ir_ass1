@@ -65,8 +65,8 @@ public class Project1 {
         Double [] coefbm25 = {0.35,0.45,0.55,0.65,0.75,0.85,0.9};
         Double [] kcoefbm25 = {0.5,0.7,0.9,1.1,1.2,1.3,1.5,1.7,1.9};
         //Double [] coef = {1.0};
-        //training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
+//        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
+//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
 
        /**
          * fusion
