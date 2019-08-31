@@ -37,7 +37,7 @@ public class Project1 {
          * year: 2017 or 2018
          */
         String Case = "train";
-        String year ="2018";
+        String year ="2017";
 
         /**
          * Training
@@ -59,7 +59,7 @@ public class Project1 {
         }
 
         String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-        Double [] coefbm25 = {0.75,1.0};
+        Double [] coefbm25 = {0.25,0.5,0.75,1.0};
         Double [] coef = {1.0};
         training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
         training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25);
