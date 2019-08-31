@@ -13,6 +13,9 @@ public class BM25 extends WeightingModel {
     public void setParameter(double _b) {
         this.b = _b;
     }
+    public void setParameter2(double _k) {
+        this.k1 = _k;
+    }
 
     @Override
     public String getInfo() {

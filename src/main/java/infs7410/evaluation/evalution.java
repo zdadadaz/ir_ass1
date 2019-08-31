@@ -31,10 +31,10 @@ public class evalution {
      * @param res Input result path
      * @require {@code qrels != null,res != null}
      */
-    public evalution(String qrels, String res) {
+    public evalution(String qrels, String res, String trec_eval_in) {
         this.qrels = qrels;
         this.res = res;
-        trec_eval = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+        this.trec_eval = trec_eval_in;
     }
     /**
      * calculate precision & recall & map & udcg
