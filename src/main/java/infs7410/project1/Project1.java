@@ -27,9 +27,12 @@ import org.terrier.terms.PorterStemmer;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+//        String indexPath = "./var/index";
+//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
         String indexPath = "./var/index";
-        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -330,6 +333,7 @@ public class Project1 {
         File filec1 = new File(foldername +"set/");
         if(filec1.exists()){
             File[] contents = filec1.listFiles();
+//            System.out.println(contents);
             if (contents != null) {
                 for (File f : contents) {
                     f.delete();
@@ -357,17 +361,27 @@ public class Project1 {
 //        eval.eval_PR_map_udcq(foldername.toString() +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
 //        eval.eval_q_map_udcg(foldername.toString() +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
 
+        StringBuilder head = new StringBuilder();
+        StringBuilder body = new StringBuilder();
+        head.append("name");
+        head.append("\t"+"map");
+        head.append("\t"+"Rprec");
+        head.append("\t"+"ndcg");
+        head.append("\n");
+
         for (File file : files) {
             if (file.isFile()) {
                 if(!file.getName().substring(0,1).equals(".") && file.getName().endsWith(".res")){
                     String inputFile = (file.getName());
                     evalution eval = new evalution(qrels,file.getAbsolutePath(),trec_evalPath);
-                    eval.eval_PR_map_udcq(foldername +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
+                    StringBuilder tmp = eval.eval_PR_map_udcq(foldername +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
                     eval.eval_q_map_udcg(foldername +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
+                    body.append(tmp);
                 }
             }
         }
-
+        head.append(body);
+        evalution.write_append(head,foldername +"set/" + "summary.set");
 
     }
     /**

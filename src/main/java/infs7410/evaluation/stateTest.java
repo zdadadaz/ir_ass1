@@ -16,7 +16,8 @@ public class stateTest {
     /**
      * measure list
      */
-    private String [] measure = {"map", "P_5","P_10","P_15","P_20","P_30","P_100","P_200","P_500","P_1000","ndcg","ndcg_cut_5","ndcg_cut_10","ndcg_cut_15","ndcg_cut_20","ndcg_cut_30","ndcg_cut_100","ndcg_cut_200","ndcg_cut_500","ndcg_cut_1000"};
+//    private String [] measure = {"map", "P_5","P_10","P_15","P_20","P_30","P_100","P_200","P_500","P_1000","ndcg","ndcg_cut_5","ndcg_cut_10","ndcg_cut_15","ndcg_cut_20","ndcg_cut_30","ndcg_cut_100","ndcg_cut_200","ndcg_cut_500","ndcg_cut_1000"};
+    private String [] measure = {"map","Rprec","ndcg"};
     public stateTest(){
     }
     /**
@@ -60,23 +61,20 @@ public class stateTest {
     public void writeHash(List<String> filelist, HashMap<String, double[]> map, String outPath) throws IOException {
         PrintWriter pw = new PrintWriter(outPath);
 
-        for (int i =0; i<filelist.size();i++){
-            pw.println(extractfilename(filelist.get(i)));
-        }
+//        for (int i =0; i<filelist.size();i++){
+//            pw.println(extractfilename(filelist.get(i)));
+//        }
+//        pw.println("\n");
+        pw.print("Name1"+"\t"+ "Name2"+ "\t"+measure[0]+"\t"+measure[1]+"\t"+measure[2]);
         pw.println("\n");
 
         for(HashMap.Entry<String,double[]> m :map.entrySet()){
             String [] qq = m.getKey().split(" ");
-            pw.println(extractfilename(qq[0]));
-            pw.println(extractfilename(qq[1]));
-//            for (int i =0; i<measure.length;i++){
-            pw.print(measure[0]);
-            pw.print("\t");
-            pw.println(m.getValue()[0]);
-            pw.print(measure[10]);
-            pw.print("\t");
-            pw.println(m.getValue()[10]);
-//            }
+            pw.println(extractfilename(qq[0])+"\t" + extractfilename(qq[1])+ "\t"+m.getValue()[0]+"\t"+m.getValue()[1]+"\t"+m.getValue()[2]);
+//            pw.println(extractfilename(qq[0]));
+//            pw.println(extractfilename(qq[1]));
+//            pw.println(m.getValue()[0]);
+//            pw.println(m.getValue()[1]);
         }
         pw.flush();
         pw.close();
