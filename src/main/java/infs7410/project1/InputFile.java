@@ -5,7 +5,6 @@ import java.io.*;
 import java.util.*;
 
 import org.terrier.terms.PorterStemmer;
-
 /**
  * InputFile - Read train topic in with stopword deteciin
  * @author Chien-chi chen
@@ -45,6 +44,7 @@ public class InputFile {
             if (file.isFile()) {
                 if (!file.getName().substring(0,1).equals(".")){
                     topicInfo aa =this.readTopicFile(foldername+ file.getName());
+//                    topicInfo aa =this.readTopicFile(foldername+ "CD009551");
                     aa.setFilename(file.getName());
                     this.output.add(aa);
                 }
@@ -100,8 +100,24 @@ public class InputFile {
                     String[] tmp = parts[0].split(" ");
                     for (String s : tmp) {
                         if (!s.toLowerCase().equals("or") && !s.toLowerCase().equals("add")){
+                            s = s.toLowerCase();
                             s = s.replace("[tiab]","");
-                            s = s.replaceAll("[^a-zA-Z0-9]", "");
+                            s = s.replace(".ti,ab.","");
+                            s = s.replace("[mesh]","");
+                            s = s.replace("[tw]","");
+                            s = s.replace(".mp.","");
+                            s = s.replace(".tw.","");
+                            s = s.replace(".nm.","");
+                            s = s.replace(".rn","");
+//                            String aa= s.replace("[\\w*]\\s*","");
+                            if(s.endsWith("*")){
+                                s = s.replace("*","A");
+                                s = s.replaceAll("[^a-zA-Z0-9]", "");
+                                s = s.replace("A","*");
+                            }else{
+                                s = s.replaceAll("[^a-zA-Z0-9]", "");
+                            }
+
                             if (!this.stopwords.contains(s) && !s.isEmpty()) {
                                 queries.add(s);
                             }
@@ -112,7 +128,7 @@ public class InputFile {
             } else if (flag == 3) {
                 if (!parts[0].isEmpty() && !parts[0].equals("Pids")) {
                     String[] tmp = parts[0].split("    ");
-                    if (tmp.length >1) {
+                    if (tmp.length >1 && this.isNumeric(tmp[1])) {
                         pids.add(tmp[1]);
                     }
                 }
@@ -137,6 +153,17 @@ public class InputFile {
             }
             line = buf.readLine();
         }
+    }
+    /**
+     * Check the string is numeric or not
+     */
+    public boolean isNumeric(String strNum) {
+        try {
+            double d = Double.parseDouble(strNum);
+        } catch (NumberFormatException | NullPointerException nfe) {
+            return false;
+        }
+        return true;
     }
 
 }

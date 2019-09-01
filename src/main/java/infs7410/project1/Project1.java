@@ -1,13 +1,13 @@
 package infs7410.project1;
 import infs7410.ranking.TF_IDF;
 import infs7410.fusion.Fusion_run;
-import infs7410.ranking.BM25;
+//import infs7410.ranking.BM25;
 import infs7410.util.topicInfo;
 import infs7410.evaluation.evalution;
 import org.apache.log4j.BasicConfigurator;
 import org.terrier.structures.Index;
 import org.terrier.matching.models.WeightingModel;
-import org.apache.commons.io.FileUtils;
+import org.terrier.matching.models.BM25;
 
 import infs7410.evaluation.stateTest;
 
@@ -17,9 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.terrier.terms.Stopwords;
-import org.terrier.terms.PorterStemmer;
-
 /**
  * main function - Run training, testing, evaluation and T-test
  * @author Chien-chi chen
@@ -27,12 +24,12 @@ import org.terrier.terms.PorterStemmer;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//        String indexPath = "./var/index";
-//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
-        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
         String indexPath = "./var/index";
-        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//        String indexPath = "./var/index";
+//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -70,8 +67,8 @@ public class Project1 {
         Double [] coef = {1.0};
         Double [] coefbm25 = {0.35};
         Double [] kcoefbm25 = {1.9};
-//        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
+        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
+//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
 
        /**
          * fusion
@@ -146,6 +143,7 @@ public class Project1 {
                 System.out.println("filename: "+ tmpTopic.getFilename());
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
+//                System.out.println("Query: "+ tmpTopic.getQuery());
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
                         tmpTopic.getTitle(),
@@ -171,7 +169,7 @@ public class Project1 {
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
 
-        BM25 alg = new BM25();
+        WeightingModel alg = new BM25();
 
         for (double c: coef)  {
             for (double k:coefk){
@@ -182,7 +180,7 @@ public class Project1 {
                 StringBuilder outNameTmp = new StringBuilder(outName);
 
                 alg.setParameter(c);
-                alg.setParameter2(k);
+//                alg.setParameter2(k);
                 runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
                 outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
                 outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k) + ".res");
@@ -192,6 +190,8 @@ public class Project1 {
                     System.out.println("filename: "+ tmpTopic.getFilename());
                     System.out.println("Topic: "+ tmpTopic.getTopic());
                     System.out.println("Title: "+ tmpTopic.getTitle());
+                    System.out.println("Query: "+ tmpTopic.getQuery());
+//                    System.out.println("docid: "+ tmpTopic.getPid());
                     TrecResults results = reranker.rerank(
                             tmpTopic.getTopic(),
                             tmpTopic.getTitle(),
@@ -227,7 +227,7 @@ public class Project1 {
 
         File[] files = new File(trainSet).listFiles();
         for (File file: files){
-            if (file.getName().endsWith(".res") && !file.getName().substring(0,1).equals(".")){
+            if ((file.getName().endsWith(".res") || file.getName().endsWith(".txt")) && !file.getName().substring(0,1).equals(".")){
                 resultFilenames.add(trainSet + file.getName());
                 FilenamesList.add(file.getName());
             }
