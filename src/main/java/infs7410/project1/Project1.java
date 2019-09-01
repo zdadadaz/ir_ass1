@@ -3,6 +3,7 @@ import infs7410.ranking.TF_IDF;
 import infs7410.fusion.Fusion_run;
 //import infs7410.ranking.BM25;
 import infs7410.util.topicInfo;
+import infs7410.query.queryProcess;
 import infs7410.evaluation.evalution;
 import org.apache.log4j.BasicConfigurator;
 import org.terrier.structures.Index;
@@ -116,6 +117,7 @@ public class Project1 {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
+        queryProcess qp = new queryProcess();
 
         WeightingModel alg;
         switch(RunName) {
@@ -144,6 +146,7 @@ public class Project1 {
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
 //                System.out.println("Query: "+ tmpTopic.getQuery());
+//                qp.expandQeury(tmpTopic.getQuery());
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
                         tmpTopic.getTitle(),
@@ -190,7 +193,7 @@ public class Project1 {
                     System.out.println("filename: "+ tmpTopic.getFilename());
                     System.out.println("Topic: "+ tmpTopic.getTopic());
                     System.out.println("Title: "+ tmpTopic.getTitle());
-                    System.out.println("Query: "+ tmpTopic.getQuery());
+//                    System.out.println("Query: "+ tmpTopic.getQuery());
 //                    System.out.println("docid: "+ tmpTopic.getPid());
                     TrecResults results = reranker.rerank(
                             tmpTopic.getTopic(),
