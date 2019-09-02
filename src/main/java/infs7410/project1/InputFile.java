@@ -100,11 +100,13 @@ public class InputFile {
                     String[] tmp = parts[0].split(" ");
                     for (String s : tmp) {
                         if (!s.toLowerCase().equals("or") && !s.toLowerCase().equals("add")){
+                            Integer index;
                             s = s.toLowerCase();
                             s = s.replace("[tiab]","");
                             s = s.replace(".ti,ab.","");
                             s = s.replace("[mesh]","");
                             s = s.replace("[tw]","");
+                            s = s.replace("[mh]","");
                             s = s.replace(".mp.","");
                             s = s.replace(".tw.","");
                             s = s.replace(".nm.","");
@@ -114,8 +116,15 @@ public class InputFile {
                             s = s.replace("$","A");
                             s = s.replaceAll("[^a-zA-Z0-9]", "");
                             s = s.replace("A","*");
-
-                            if (!this.stopwords.contains(s) && !s.isEmpty()) {
+                            index = s.indexOf("[");
+                            if (index>0){
+                                s = s.substring(0,index);
+                            }
+                            index = s.indexOf(".");
+                            if(index > 0){
+                                s = s.substring(0,index);
+                            }
+                            if (!this.stopwords.contains(s) && !s.isEmpty() && s.length()>2) {
                                 queries.add(s);
                             }
                         }
@@ -124,7 +133,7 @@ public class InputFile {
                 }
             } else if (flag == 3) {
                 if (!parts[0].isEmpty() && !parts[0].equals("Pids")) {
-                    String[] tmp = parts[0].split("    ");
+                    String[] tmp = parts[0].split("\\s+");
                     if (tmp.length >1 && this.isNumeric(tmp[1])) {
                         pids.add(tmp[1]);
                     }

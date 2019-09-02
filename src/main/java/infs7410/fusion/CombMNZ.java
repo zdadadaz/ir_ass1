@@ -22,7 +22,9 @@ public class CombMNZ extends Fusion {
                     double score = result.getScore();
                     result.setScore(result.getScore() + score);
                     seen.put(result.getDocID(), result);
-                    counts.put(result.getDocID(), counts.get(result.getDocID())+1);
+                    if (score > 0){
+                        counts.put(result.getDocID(), counts.get(result.getDocID())+1);
+                    }
                 }
             }
         }

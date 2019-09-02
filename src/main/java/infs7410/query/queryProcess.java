@@ -3,48 +3,71 @@ package infs7410.query;
 import infs7410.project1.TrecResult;
 import infs7410.project1.TrecResults;
 import org.terrier.querying.*;
+import org.terrier.terms.PorterStemmer;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class queryProcess {
     private String url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=";
     private String indexPath = "./var/index/pubmed";
+    private HashSet<String> queryList = new HashSet<String>();
 
     public queryProcess(){
 
     }
-    public String expandQeury(ArrayList<String> terms, int k,String topic) throws IOException {
+    public ArrayList<String> expandQeury(ArrayList<String> terms, int k,String topic) throws IOException {
         StringBuilder termlist = new StringBuilder();
+        ArrayList<String> output = new ArrayList<String>();
+        PorterStemmer ps = new PorterStemmer();
+        this.queryList.clear();
         for (String s : terms){
-            StringBuilder tmp = this.expandQeuryOne(s);
-            termlist.append(tmp);
+            String tmpS = s.replaceAll("[^a-zA-Z0-9]", "");
+            if (!this.queryList.contains(tmpS)){
+                this.queryList.add(ps.stem(tmpS));
+                this.expandQeuryOne(s);
+            }
+
         }
-        return this.runIDFreduction(termlist.toString(),topic,k);
+        for (String s : this.queryList) {
+            termlist.append(" " + s);
+        }
+//        System.out.println("Query input to IDFreduction:"+termlist.toString());
+        String out = this.runIDFreduction(termlist.toString(),k);
+        String [] outArr = out.split(" ");
+        for (String s: outArr){
+            output.add(s);
+        }
+        return output;
 
     }
 
-    public StringBuilder expandQeuryOne(String term)throws IOException {
+    public void expandQeuryOne(String term)throws IOException {
         StringBuilder termlist = new StringBuilder();
+        PorterStemmer ps = new PorterStemmer();
         if (!term.endsWith("*")) {
-            return termlist;
+            return;
         }
         try{
             Scanner s = new Scanner(new URL(this.url + term).openStream());
             String tmp = s.findWithinHorizon("<QueryTranslation>\\s*(.*)\\s*<\\/QueryTranslation>",0);
             termlist = this.parseResponse(tmp);
-            System.out.println(termlist.toString());
             Thread.sleep(1000);
         }catch (NullPointerException | InterruptedException nfe){
+            String termTmp = term.replaceAll("[^a-zA-Z0-9]", "");
+            if(!this.queryList.contains(ps.stem(termTmp))){
+                this.queryList.add(ps.stem(termTmp));
+                termlist.append(" " +termTmp);
+            }
         }
 
-        return termlist;
     }
 
-    public String runIDFreduction(String query, String topic, int k) throws IOException {
+    public String runIDFreduction(String query, int k) throws IOException {
         IndexRef ref = IndexRef.of(this.indexPath + ".properties");
         IDFReduction expansion = new IDFReduction();
         String idfrQuery = expansion.reduce(query,k, ref);
@@ -55,14 +78,21 @@ public class queryProcess {
     public StringBuilder parseResponse(String input){
         StringBuilder queryList= new StringBuilder();
         String [] strArr = input.split(" OR ");
+        PorterStemmer ps = new PorterStemmer();
         for (String s : strArr){
             s = s.toLowerCase();
             s = s.replace("<querytranslation>","");
             s = s.replace("<\\/querytranslation>","");
             s = s.replace("all fields","");
             s = s.replaceAll("[^a-zA-Z0-9]", "");
+            s = s.replace("exp","");
+            s = s.replace("adj3","");
             if (!s.isEmpty()){
-                queryList.append(" "+s);
+                s = ps.stem(s);
+                if(!this.queryList.contains(s)){
+                    queryList.append(" "+s);
+                    this.queryList.add(s);
+                }
             }
         }
         return queryList;

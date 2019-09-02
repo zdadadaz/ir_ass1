@@ -140,17 +140,22 @@ public class Project1 {
                 outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
                 outNameTmp.append("_"+ Double.toString(c) + ".res");
             }
+            File fdelet = new File(outNameTmp.toString());
+            if(fdelet.exists()){
+                fdelet.delete();
+            }
             for (Integer i=0; i < Alltopic.getFileSize(); i++){
                 topicInfo tmpTopic = Alltopic.getOutput(i);
                 System.out.println("filename: "+ tmpTopic.getFilename());
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
-//                System.out.println("Query: "+ tmpTopic.getQuery());
-//                String tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
-//                System.out.println(tmpQuery);
+                System.out.println("Query: "+ tmpTopic.getQuery());
+                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
+                System.out.println("ourput query: "+tmpQuery.toString());
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
-                        tmpTopic.getTitle(),
+//                        tmpTopic.getTitle(),
+                        tmpQuery,
                         tmpTopic.getPid(),
                         alg);
                 results.setRunName(runNameTmp.toString()); // "example1"
@@ -188,7 +193,10 @@ public class Project1 {
                 runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
                 outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
                 outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k) + ".res");
-
+                File fdelet = new File(outNameTmp.toString());
+                if(fdelet.exists()){
+                    fdelet.delete();
+                }
                for (Integer i=0; i < Alltopic.getFileSize(); i++){
                     topicInfo tmpTopic = Alltopic.getOutput(i);
                     System.out.println("filename: "+ tmpTopic.getFilename());

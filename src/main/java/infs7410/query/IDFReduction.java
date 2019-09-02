@@ -29,8 +29,6 @@ public class IDFReduction {
             if(term.equals("")){
                 continue;
             }
-            SearchRequest srq = queryManager.newSearchRequestFromQuery(term);
-            queryManager.runSearchRequest(srq);
 
             LexiconEntry entry = lexicon.getLexiconEntry(term);
             if (entry == null) {
@@ -39,6 +37,7 @@ public class IDFReduction {
             }
 
             double docFreq = entry.getDocumentFrequency();
+            Collections.reverse(scoredTerms);
 
             double idf = Math.log(N / (docFreq + 1));
             scoredTerms.add(new Pair(term, idf));
