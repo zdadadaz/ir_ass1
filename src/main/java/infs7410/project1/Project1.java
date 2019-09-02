@@ -25,12 +25,12 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-        String indexPath = "./var/index";
-        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
-//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
 //        String indexPath = "./var/index";
-//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String indexPath = "./var/index";
+        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -71,7 +71,7 @@ public class Project1 {
         training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
 //        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
 
-       /**
+        /**
          * fusion
          * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
          * output: result of fusion for three methods.
@@ -90,7 +90,7 @@ public class Project1 {
         String inputFolder = "./"+yearCasefolder+"/";
         evalution_set(qrels, inputFolder, trec_evalPath);
 
-       /**
+        /**
          * T-test
          * input: folder contains eval, output path
          * output: write p value out.
@@ -146,8 +146,8 @@ public class Project1 {
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
 //                System.out.println("Query: "+ tmpTopic.getQuery());
-                String tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
-                System.out.println(tmpQuery);
+//                String tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
+//                System.out.println(tmpQuery);
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
                         tmpTopic.getTitle(),

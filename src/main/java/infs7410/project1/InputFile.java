@@ -109,15 +109,11 @@ public class InputFile {
                             s = s.replace(".tw.","");
                             s = s.replace(".nm.","");
                             s = s.replace(".rn","");
-//                            String aa= s.replace("[\\w*]\\s*","");
-                            if(s.endsWith("*") || s.endsWith("$")){
-                                s = s.replace("*","A");
-                                s = s.replace("$","A");
-                                s = s.replaceAll("[^a-zA-Z0-9]", "");
-                                s = s.replace("A","*");
-                            }else{
-                                s = s.replaceAll("[^a-zA-Z0-9]", "");
-                            }
+                            s = s.replaceAll("\"","");
+                            s = s.replace("*","A");
+                            s = s.replace("$","A");
+                            s = s.replaceAll("[^a-zA-Z0-9]", "");
+                            s = s.replace("A","*");
 
                             if (!this.stopwords.contains(s) && !s.isEmpty()) {
                                 queries.add(s);

@@ -23,7 +23,6 @@ public class queryProcess {
             StringBuilder tmp = this.expandQeuryOne(s);
             termlist.append(tmp);
         }
-
         return this.runIDFreduction(termlist.toString(),topic,k);
 
     }
@@ -46,18 +45,10 @@ public class queryProcess {
     }
 
     public String runIDFreduction(String query, String topic, int k) throws IOException {
-        IndexRef ref = IndexRef.of(this.indexPath + ".properties"); // not sure
-        TrecResults resultsIDFr = new TrecResults();
+        IndexRef ref = IndexRef.of(this.indexPath + ".properties");
         IDFReduction expansion = new IDFReduction();
-//        Manager queryManager = ManagerFactory.from(ref);
-
         String idfrQuery = expansion.reduce(query,k, ref);
-//        logger.info(String.format("PRF QE: [topic %s] issuing query %s: ", topic, idfrQuery));
-//        SearchRequest srq = queryManager.newSearchRequestFromQuery(idfrQuery);
-//        srq.setControl(SearchRequest.CONTROL_WMODEL, "BM25");
-//        queryManager.runSearchRequest(srq);
 
-//        resultsIDFr.getTrecResults().addAll(scoredDocs2TrecResults(srq.getResults(), topic).getTrecResults());
         return idfrQuery;
     }
 
