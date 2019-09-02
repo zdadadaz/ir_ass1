@@ -40,15 +40,16 @@ public class Project1 {
          * Case: train or test
          * year: 2017 or 2018
          */
-        String Case = "test";
-        String year ="2018";
+        String Case = "train";
+        String year ="2017";
+        String Query = "boolean";
 
         /**
          * Training
          * input: path: indexin path, outName: out put path name
          * output: training res
          */
-        String yearCasefolder = year+Case;
+        String yearCasefolder = year+Case+Query;
         file = new File("./" + yearCasefolder +"/");
         if(!file.exists()){
             file.mkdirs();
@@ -65,10 +66,10 @@ public class Project1 {
         }
 
         String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-//        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
+        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
         Double [] kcoefbm25 = {1.2};
         Double [] coef = {1.0};
-        Double [] coefbm25 = {0.45};
+//        Double [] coefbm25 = {0.45};
 //        Double [] kcoefbm25 = {1.9};
         training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
         training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
@@ -119,7 +120,8 @@ public class Project1 {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
-        queryProcess qp = new queryProcess();
+        String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
+        queryProcess qp = new queryProcess(queryFolder);
 
         WeightingModel alg;
         switch(RunName) {
@@ -151,16 +153,15 @@ public class Project1 {
                 System.out.println("filename: "+ tmpTopic.getFilename());
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
-<<<<<<< HEAD
-//                System.out.println("Query: "+ tmpTopic.getQuery());
-//                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
-//                System.out.println("ourput query: "+tmpQuery.toString());
-=======
                 System.out.println("Query: "+ tmpTopic.getQuery());
-                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                ArrayList<String> tmpQuery;
+                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                }else{
+                    tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                }
                 System.out.println("output query: "+tmpQuery.toString());
                 writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
->>>>>>> 75c830b323956a6dfebd09fb19c48423f0e0aacf
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
                         tmpTopic.getTitle(),
@@ -186,7 +187,8 @@ public class Project1 {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
-        queryProcess qp = new queryProcess();
+        String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
+        queryProcess qp = new queryProcess(queryFolder);
 
         WeightingModel alg = new BM25();
 
@@ -212,10 +214,14 @@ public class Project1 {
                     System.out.println("filename: "+ tmpTopic.getFilename());
                     System.out.println("Topic: "+ tmpTopic.getTopic());
                     System.out.println("Title: "+ tmpTopic.getTitle());
-                    ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                    ArrayList<String> tmpQuery;
+                    if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                       tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                    }else{
+                        tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                    }
                     System.out.println("output query: "+tmpQuery.toString());
                     writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-
                    TrecResults results = reranker.rerank(
                             tmpTopic.getTopic(),
 //                            tmpTopic.getTitle(),
