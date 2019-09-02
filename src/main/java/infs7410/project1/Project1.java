@@ -25,12 +25,12 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//        String indexPath = "./var/index";
-//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
-        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
         String indexPath = "./var/index";
-        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//        String indexPath = "./var/index";
+//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -38,7 +38,7 @@ public class Project1 {
          * Case: train or test
          * year: 2017 or 2018
          */
-        String Case = "train";
+        String Case = "test";
         String year ="2018";
 
         /**
@@ -63,13 +63,13 @@ public class Project1 {
         }
 
         String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-//        Double [] coefbm25 = {0.35,0.45,0.55,0.65,0.75,0.85,0.9};
-//        Double [] kcoefbm25 = {0.5,0.7,0.9,1.1,1.2,1.3,1.5,1.7,1.9};
+//        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
+        Double [] kcoefbm25 = {1.2};
         Double [] coef = {1.0};
-        Double [] coefbm25 = {0.35};
-        Double [] kcoefbm25 = {1.9};
+        Double [] coefbm25 = {0.45};
+//        Double [] kcoefbm25 = {1.9};
         training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
+        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
 
         /**
          * fusion
@@ -149,13 +149,13 @@ public class Project1 {
                 System.out.println("filename: "+ tmpTopic.getFilename());
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
-                System.out.println("Query: "+ tmpTopic.getQuery());
-                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
-                System.out.println("ourput query: "+tmpQuery.toString());
+//                System.out.println("Query: "+ tmpTopic.getQuery());
+//                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
+//                System.out.println("ourput query: "+tmpQuery.toString());
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
-//                        tmpTopic.getTitle(),
-                        tmpQuery,
+                        tmpTopic.getTitle(),
+//                        tmpQuery,
                         tmpTopic.getPid(),
                         alg);
                 results.setRunName(runNameTmp.toString()); // "example1"
