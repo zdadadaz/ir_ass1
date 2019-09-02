@@ -109,6 +109,7 @@ public class InputFile {
                             s = s.replace("[mh]","");
                             s = s.replace(".mp.","");
                             s = s.replace(".tw.","");
+                            s = s.replace("adj3","");
                             s = s.replace(".nm.","");
                             s = s.replace(".rn","");
                             s = s.replaceAll("\"","");
@@ -124,7 +125,7 @@ public class InputFile {
                             if(index > 0){
                                 s = s.substring(0,index);
                             }
-                            if (!this.stopwords.contains(s) && !s.isEmpty() && s.length()>2) {
+                            if (!this.stopwords.contains(s) && !s.isEmpty() && s.length()>3) {
                                 queries.add(s);
                             }
                         }

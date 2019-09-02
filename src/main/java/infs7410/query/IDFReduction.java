@@ -37,12 +37,13 @@ public class IDFReduction {
             }
 
             double docFreq = entry.getDocumentFrequency();
-            Collections.reverse(scoredTerms);
 
             double idf = Math.log(N / (docFreq + 1));
             scoredTerms.add(new Pair(term, idf));
         }
         Collections.sort(scoredTerms);
+        Collections.reverse(scoredTerms);
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < K && i < scoredTerms.size(); i++) {
             sb.append(scoredTerms.get(i).term).append(" ");

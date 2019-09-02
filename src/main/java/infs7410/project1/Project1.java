@@ -13,7 +13,9 @@ import org.terrier.matching.models.BM25;
 import infs7410.evaluation.stateTest;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -150,8 +152,9 @@ public class Project1 {
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
                 System.out.println("Query: "+ tmpTopic.getQuery());
-                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
-                System.out.println("ourput query: "+tmpQuery.toString());
+                ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                System.out.println("output query: "+tmpQuery.toString());
+                writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
 //                        tmpTopic.getTitle(),
@@ -177,6 +180,7 @@ public class Project1 {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
+        queryProcess qp = new queryProcess();
 
         WeightingModel alg = new BM25();
 
@@ -202,11 +206,14 @@ public class Project1 {
                     System.out.println("filename: "+ tmpTopic.getFilename());
                     System.out.println("Topic: "+ tmpTopic.getTopic());
                     System.out.println("Title: "+ tmpTopic.getTitle());
-//                    System.out.println("Query: "+ tmpTopic.getQuery());
-//                    System.out.println("docid: "+ tmpTopic.getPid());
-                    TrecResults results = reranker.rerank(
+                    ArrayList<String> tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                    System.out.println("output query: "+tmpQuery.toString());
+                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
+
+                   TrecResults results = reranker.rerank(
                             tmpTopic.getTopic(),
-                            tmpTopic.getTitle(),
+//                            tmpTopic.getTitle(),
+                            tmpQuery,
                             tmpTopic.getPid(),
                             alg);
                     results.setRunName(runNameTmp.toString()); // "example1"
@@ -228,15 +235,6 @@ public class Project1 {
         List<String> resultFilenames = new ArrayList<>();
         List<String> FilenamesList = new ArrayList<>();
 
-//        String file1 = "booles.res";
-//        String file2 = "picoes.res";
-//        String file3 = "run1.res";
-//        String file4 = "BM25.res";
-//        String file5 = "Sheffield1.res";
-//        String file6 = "Sheffield2.res";
-//        String file7 = "Sheffield3.res";
-//        String file8 = "Sheffield4.res";
-
         File[] files = new File(trainSet).listFiles();
         for (File file: files){
             if ((file.getName().endsWith(".res") || file.getName().endsWith(".txt")) && !file.getName().substring(0,1).equals(".")){
@@ -245,28 +243,8 @@ public class Project1 {
             }
         }
 
-
 //      == choose algorithm ==
         String[] Alg = {"borda","combsum","combmnz"};
-
-//      == assign input filename
-//        resultFilenames.add(trainSet + file1);
-//        resultFilenames.add(trainSet + file2);
-//        resultFilenames.add(trainSet + file3);
-//        resultFilenames.add(trainSet + file4);
-//        resultFilenames.add(trainSet + file5);
-//        resultFilenames.add(trainSet + file6);
-//        resultFilenames.add(trainSet + file7);
-//        resultFilenames.add(trainSet + file8);
-//
-//        FilenamesList.add(file1);
-//        FilenamesList.add(file2);
-//        FilenamesList.add(file3);
-//        FilenamesList.add(file4);
-//        FilenamesList.add(file5);
-//        FilenamesList.add(file6);
-//        FilenamesList.add(file7);
-//        FilenamesList.add(file8);
 
         File file = new File(fusionPath);
         if(!file.exists()){
@@ -367,12 +345,6 @@ public class Project1 {
 
         File[] files = new File(foldername).listFiles();
 
-//        String testfile = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/project/train/tfidf.res";
-//        String inputFile = stateTest.extractfilename(testfile);
-//        evalution eval = new evalution(qrels,testfile);
-//        eval.eval_PR_map_udcq(foldername.toString() +"set/" + inputFile.substring(0,inputFile.length()-4) + ".set");  // Precision recall & map udcg
-//        eval.eval_q_map_udcg(foldername.toString() +"eval/" + inputFile.substring(0,inputFile.length()-4) + ".eval");   // every map * udcg for statistical test.
-
         StringBuilder head = new StringBuilder();
         StringBuilder body = new StringBuilder();
         head.append("name");
@@ -410,9 +382,7 @@ public class Project1 {
         for (File file : files) {
             String tmp = file.getName();
             if (!tmp.substring(0,1).equals(".")) {
-                //System.out.println(file.getAbsolutePath());
-                //System.out.println(file.getName());
-                testList.add(file.getAbsolutePath());
+                 testList.add(file.getAbsolutePath());
             }
         }
         HashMap<String, double[]> statall = new HashMap<>();
@@ -423,6 +393,14 @@ public class Project1 {
             }
         }
         tTest.writeHash(testList, statall, outPath);
+    }
+    public static void writeString(ArrayList<String> input,String outPath ) throws IOException {
+        OutputStream os = new FileOutputStream(outPath);
+        for (String result : input) {
+            os.write(String.format("%s\n", result).getBytes());
+        }
+        os.flush();
+        os.close();
     }
 
 }
