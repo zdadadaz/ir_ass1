@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class queryProcess {
     private String url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=";
-    private String indexPath = "./var/index";
+    private String indexPath = "./var/index/pubmed";
 
     public queryProcess(){
 
@@ -24,7 +24,7 @@ public class queryProcess {
             termlist.append(tmp);
         }
 
-        return this.runIDFreduction(termlist.toString(),topic);
+        return this.runIDFreduction(termlist.toString(),topic,k);
 
     }
 
@@ -36,22 +36,22 @@ public class queryProcess {
         try{
             Scanner s = new Scanner(new URL(this.url + term).openStream());
             String tmp = s.findWithinHorizon("<QueryTranslation>\\s*(.*)\\s*<\\/QueryTranslation>",0);
-            System.out.println(tmp);
             termlist = this.parseResponse(tmp);
-
-        }catch ( NullPointerException nfe){
+            System.out.println(termlist.toString());
+            Thread.sleep(1000);
+        }catch (NullPointerException | InterruptedException nfe){
         }
 
         return termlist;
     }
 
-    public String runIDFreduction(String query, String topic) throws IOException {
+    public String runIDFreduction(String query, String topic, int k) throws IOException {
         IndexRef ref = IndexRef.of(this.indexPath + ".properties"); // not sure
         TrecResults resultsIDFr = new TrecResults();
         IDFReduction expansion = new IDFReduction();
-        Manager queryManager = ManagerFactory.from(ref);
+//        Manager queryManager = ManagerFactory.from(ref);
 
-        String idfrQuery = expansion.reduce(query,3, ref);
+        String idfrQuery = expansion.reduce(query,k, ref);
 //        logger.info(String.format("PRF QE: [topic %s] issuing query %s: ", topic, idfrQuery));
 //        SearchRequest srq = queryManager.newSearchRequestFromQuery(idfrQuery);
 //        srq.setControl(SearchRequest.CONTROL_WMODEL, "BM25");
@@ -66,7 +66,10 @@ public class queryProcess {
         String [] strArr = input.split(" OR ");
         for (String s : strArr){
             s = s.toLowerCase();
-            s = s.replace("/[all fields/]","");
+            s = s.replace("<querytranslation>","");
+            s = s.replace("<\\/querytranslation>","");
+            s = s.replace("all fields","");
+            s = s.replaceAll("[^a-zA-Z0-9]", "");
             if (!s.isEmpty()){
                 queryList.append(" "+s);
             }

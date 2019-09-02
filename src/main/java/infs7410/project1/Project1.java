@@ -113,7 +113,7 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef) throws IOException {
+    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef) throws IOException, InterruptedException {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
@@ -146,7 +146,8 @@ public class Project1 {
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
 //                System.out.println("Query: "+ tmpTopic.getQuery());
-//                qp.expandQeury(tmpTopic.getQuery());
+                String tmpQuery = qp.expandQeury(tmpTopic.getQuery(),10,tmpTopic.getTopic());
+                System.out.println(tmpQuery);
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
                         tmpTopic.getTitle(),
