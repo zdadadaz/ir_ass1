@@ -24,24 +24,29 @@ public class queryProcess {
         StringBuilder termlist = new StringBuilder();
         ArrayList<String> output = new ArrayList<String>();
         PorterStemmer ps = new PorterStemmer();
+        HashSet<String> termslist = new HashSet<String>();
+
         this.queryList.clear();
         for (String s : terms){
             String tmpS = s.replaceAll("[^a-zA-Z0-9]", "");
             if (!this.queryList.contains(tmpS)){
-                this.queryList.add(ps.stem(tmpS));
+//                this.queryList.add(ps.stem(tmpS));
                 this.expandQeuryOne(s);
             }
-
+            if(!termslist.contains(tmpS)){
+                output.add(ps.stem(tmpS));
+                termslist.add(ps.stem(tmpS));
+            }
         }
         for (String s : this.queryList) {
             termlist.append(" " + s);
         }
-//        System.out.println("Query input to IDFreduction:"+termlist.toString());
         String out = this.runIDFreduction(termlist.toString(),k);
         String [] outArr = out.split(" ");
         for (String s: outArr){
             output.add(s);
         }
+
         return output;
 
     }
