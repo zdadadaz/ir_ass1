@@ -42,7 +42,7 @@ public class Project1 {
          */
         String Case = "train";
         String year ="2017";
-        String Query = "boolean";
+        String Query = "title";
 
         /**
          * Training

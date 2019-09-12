@@ -63,7 +63,6 @@ public class Reranker {
                     }
                 }
             }
-
         }
         // Set score to 0 for docs that do not contain any term.
         for (String id : docIdSet) {
