@@ -27,22 +27,25 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-        String indexPath = "./var/index";
-        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
-//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
 //        String indexPath = "./var/index";
-//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+
+        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String indexPath = "./var/index";
+        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
          * Choose case and year for training and testing in different years
          * Case: train or test
          * year: 2017 or 2018
+         * Query: title or boolean
          */
         String Case = "train";
         String year ="2017";
-        String Query = "title";
+        String Query = "boolean";
+        String QueryReduction_resPath = "./2017train/bm25_0.45_1.2.res";
 
         /**
          * Training
@@ -71,8 +74,8 @@ public class Project1 {
         Double [] coef = {1.0};
 //        Double [] coefbm25 = {0.45};
 //        Double [] kcoefbm25 = {1.9};
-        training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef);
-        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25);
+        training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query);
+//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query);
 
         /**
          * fusion
@@ -116,12 +119,12 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef) throws IOException, InterruptedException {
+    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef,String resPath, String queryType) throws IOException, InterruptedException {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
         String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
-        queryProcess qp = new queryProcess(queryFolder);
+        queryProcess qp = new queryProcess(queryFolder,resPath);
 
         WeightingModel alg;
         switch(RunName) {
@@ -139,7 +142,6 @@ public class Project1 {
             StringBuilder outNameTmp = new StringBuilder(outName);
             if (RunName.equals("bm25")){
                 alg.setParameter(c);
-
                 runNameTmp.append("_"+ Double.toString(c));
                 outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
                 outNameTmp.append("_"+ Double.toString(c) + ".res");
@@ -155,17 +157,21 @@ public class Project1 {
                 System.out.println("Title: "+ tmpTopic.getTitle());
                 System.out.println("Query: "+ tmpTopic.getQuery());
                 ArrayList<String> tmpQuery;
-                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
-                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                if (queryType.equals("boolean")){
+                    if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                        tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                    }else{
+                        tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                    }
+                    System.out.println("output query: "+tmpQuery.toString());
+                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
                 }else{
-                    tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                    tmpQuery = tmpTopic.getTitle();
                 }
-                System.out.println("output query: "+tmpQuery.toString());
-                writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
-                        tmpTopic.getTitle(),
-//                        tmpQuery,
+//                        tmpTopic.getTitle(),
+                        tmpQuery,
                         tmpTopic.getPid(),
                         alg);
                 results.setRunName(runNameTmp.toString()); // "example1"
@@ -183,12 +189,12 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk) throws IOException {
+    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk, String resPath, String queryType) throws IOException {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
         String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
-        queryProcess qp = new queryProcess(queryFolder);
+        queryProcess qp = new queryProcess(queryFolder,resPath);
 
         WeightingModel alg = new BM25();
 
@@ -215,14 +221,18 @@ public class Project1 {
                     System.out.println("Topic: "+ tmpTopic.getTopic());
                     System.out.println("Title: "+ tmpTopic.getTitle());
                     ArrayList<String> tmpQuery;
-                    if (qp.HasBooleanQuery(tmpTopic.getTopic())){
-                       tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                    if (queryType.equals("boolean")){
+                       if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                           tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                       }else{
+                           tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                       }
+                       System.out.println("output query: "+tmpQuery.toString());
+                       writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
                     }else{
-                        tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                       tmpQuery = tmpTopic.getTitle();
                     }
-                    System.out.println("output query: "+tmpQuery.toString());
-                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-                   TrecResults results = reranker.rerank(
+                    TrecResults results = reranker.rerank(
                             tmpTopic.getTopic(),
 //                            tmpTopic.getTitle(),
                             tmpQuery,

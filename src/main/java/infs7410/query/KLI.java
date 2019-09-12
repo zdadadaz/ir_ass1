@@ -17,6 +17,7 @@ import org.terrier.matching.models.queryexpansion.KL;
 import org.terrier.querying.ExpansionTerms.ExpansionTerm;
 import org.terrier.querying.ExpansionTerms.ExpansionTerm;
 import org.terrier.structures.postings.IterablePosting;
+import org.terrier.structures.postings.Posting;
 
 public class KLI {
     HashSet<String> docSet = new HashSet<>();
@@ -40,8 +41,11 @@ public class KLI {
         Lexicon<String> lexicon = index.getLexicon();
         double N = index.getCollectionStatistics().getNumberOfDocuments();
         long collectlength = index.getCollectionStatistics().getNumberOfTokens(); // how to get collection length ???
-
         List<IDFReduction.Pair> scoredTerms = new ArrayList<>(terms.length);
+
+//      what is direct index? if it will traverse all doc, then it will do it correctly.
+        PostingIndex directIndex =  index.getDirectIndex();
+        DocumentIndex documentIndex = index.getDocumentIndex();
 
         // Run a search request using the original query.
         Manager queryManager = ManagerFactory.from(ref);
@@ -54,21 +58,28 @@ public class KLI {
                 scoredTerms.add(new IDFReduction.Pair(term, 0));
                 continue;
             }
+
+
             wm.setEntryStatistics(entry.getWritableEntryStatistics());
             wm.setKeyFrequency(0);
             // Prepare the weighting model for scoring.
             wm.prepare();
-            IterablePosting ip = invertedIndex.getPostings(entry);
+//            IterablePosting ip = invertedIndex.getPostings(entry);
+            IterablePosting ip = directIndex.getPostings(entry);
             double withindocTF = 0; // get initial intrieved document TF??
             double withindoclength = 0; // how to get initial intrieved document length??
             while (ip.next() != IterablePosting.EOL) {
+//                System.out.println(ip.getId());
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
                     withindocTF += wm.score(ip);
-                    withindoclength += wm.getDoclength();
+//                    withindoclength += wm.getDoclength();
+//                    withindoclength += documentIndex.getDocumentLength(docId);
                 }
+                withindoclength += 1;
             }
-            
+            System.out.println(withindoclength + ":" + this.initDoc.size());
+
             double docFreq = entry.getDocumentFrequency();
             double collectionTF = entry.getFrequency();
             double ptD = withindocTF/withindoclength;

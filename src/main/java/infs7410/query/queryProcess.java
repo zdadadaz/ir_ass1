@@ -18,9 +18,11 @@ public class queryProcess {
     private String indexPath = "./var/index/pubmed";
     private HashSet<String> queryList = new HashSet<String>();
     private HashMap<String, ArrayList<String>> queryhash = new HashMap<String, ArrayList<String>>();
+    private String resultPath;
 
-    public queryProcess(String foldername) throws IOException {
+    public queryProcess(String foldername, String initResultPath) throws IOException {
         this.readQuery(foldername);
+        this.resultPath = initResultPath;
     }
     public ArrayList<String> expandQeury(ArrayList<String> terms, int k,String topic) throws IOException {
         StringBuilder termlist = new StringBuilder();
@@ -44,7 +46,9 @@ public class queryProcess {
         for (String s : this.queryList) {
             termlist.append(" " + s);
         }
-        String out = this.runIDFreduction(termlist.toString(),k);
+//        choose method of query reduction
+//        String out = this.runIDFreduction(termlist.toString(),k);
+        String out = this.runKLI(termlist.toString(),k);
         String [] outArr = out.split(" ");
         for (String s: outArr){
             s = ps.stem(s);
@@ -77,6 +81,13 @@ public class queryProcess {
             }
         }
 
+    }
+    public String runKLI(String query, int k ) throws IOException {
+        IndexRef ref = IndexRef.of(this.indexPath + ".properties");
+        KLI expansion = new KLI(this.resultPath);
+        String idfrQuery = expansion.KLI_reduce(query,k, ref);
+
+        return idfrQuery;
     }
 
     public String runIDFreduction(String query, int k) throws IOException {
