@@ -27,13 +27,13 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//        String indexPath = "./var/index";
-//        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
-
-        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
         String indexPath = "./var/index";
-        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+
+//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//        String indexPath = "./var/index";
+//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -41,74 +41,78 @@ public class Project1 {
          * Case: train or test
          * year: 2017 or 2018
          * Query: title or boolean
+         * QueryReduction: no or IDF or IDFr or KLI
+         * QueryReduction_ks:0 or number of left query or % of left query ex: {0} or {3,5,7} or  {0.85,0.5,0.3}
+         * QueryReduction_resPath: path of init retrieved document set for KLI
          */
         String Case = "train";
         String year ="2017";
-        String Query = "boolean";
-        String QueryReduction_resPath = "./2017train/bm25_0.45_1.2.res";
-
-        /**
-         * Training
-         * input: path: indexin path, outName: out put path name
-         * output: training res
-         */
-        String yearCasefolder = year+Case+Query;
-        file = new File("./" + yearCasefolder +"/");
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
-        String qrels = "";
-        for (File f : files){
-            if (!f.getName().substring(0,1).equals(".")){
-                qrels = f.getAbsolutePath();
+        String Query = "title";
+        String QueryReduction = "IDFr";
+        String QueryReduction_resPath = "./2018trainboolean/bm25_0.45_1.2.res";
+        double[] QueryReduction_ks = {0.85,0.5,0.3};
+        for (double QueryReduction_k : QueryReduction_ks){
+            /**
+             * Training
+             * input: path: indexin path, outName: out put path name
+             * output: training res
+             */
+            String yearCasefolder = year+Case+Query+"_"+QueryReduction;
+            file = new File("./" + yearCasefolder +"/");
+            if(!file.exists()){
+                file.mkdirs();
             }
+            File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
+            String qrels = "";
+            for (File f : files){
+                if (!f.getName().substring(0,1).equals(".")){
+                    qrels = f.getAbsolutePath();
+                }
+            }
+            if (qrels.equals("")){
+                throw new RuntimeException("Qrels is not exist");
+            }
+
+            String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
+//        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
+            Double [] coef = {1.0};
+            Double [] coefbm25 = {0.45};
+            training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+            training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+
+            /**
+             * fusion
+             * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
+             * output: result of fusion for three methods.
+             */
+//            String trainSet = dirPath + "runs/"+year+"/";
+//            String fusionPath  = "./"+yearCasefolder+"/";
+//            if (Case.equals("test")){
+//                fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
+//            }
+
+            /**
+             * evaluation for map and udcg
+             * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
+             * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
+             */
+            String inputFolder = "./"+yearCasefolder+"/";
+            evalution_set(qrels, inputFolder, trec_evalPath);
+
+            /**
+             * T-test
+             * input: folder contains eval, output path
+             * output: write p value out.
+             */
+            file = new File("./"+yearCasefolder+"/stat");
+            if(!file.exists()){
+                file.mkdirs();
+            }
+            String foldername = "./"+yearCasefolder+"/eval/";
+            String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
+            evalution_stat( foldername, outPath);
         }
-        if (qrels.equals("")){
-            throw new RuntimeException("Qrels is not exist");
-        }
-
-        String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
-        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
-        Double [] kcoefbm25 = {1.2};
-        Double [] coef = {1.0};
-//        Double [] coefbm25 = {0.45};
-//        Double [] kcoefbm25 = {1.9};
-        training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query);
-//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query);
-
-        /**
-         * fusion
-         * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
-         * output: result of fusion for three methods.
-         */
-        String trainSet = dirPath + "runs/"+year+"/";
-        String fusionPath  = "./"+yearCasefolder+"/";
-        if (Case.equals("test")){
-            fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
-        }
-
-        /**
-         * evaluation for map and udcg
-         * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
-         * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
-         */
-        String inputFolder = "./"+yearCasefolder+"/";
-        evalution_set(qrels, inputFolder, trec_evalPath);
-
-        /**
-         * T-test
-         * input: folder contains eval, output path
-         * output: write p value out.
-         */
-        file = new File("./"+yearCasefolder+"/stat");
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        String foldername = "./"+yearCasefolder+"/eval/";
-        String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
-        evalution_stat( foldername, outPath);
-
     }
     /**
      * Training Bm25 algorithm
@@ -119,7 +123,7 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef,String resPath, String queryType) throws IOException, InterruptedException {
+    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef,String resPath, String queryType, String QueryReduction, double QueryReduction_k) throws Exception {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
@@ -136,16 +140,17 @@ public class Project1 {
         }
 
         for (double c: coef)  {
+            double k = 1.2;
             System.out.println("Coeficient : " + Double.toString(c));
-
+            System.out.println("Coeficient k : " + Double.toString(k));
+            System.out.println("QueryReduction_k : " + Double.toString(QueryReduction_k));
             StringBuilder runNameTmp = new StringBuilder(RunName);
             StringBuilder outNameTmp = new StringBuilder(outName);
-            if (RunName.equals("bm25")){
-                alg.setParameter(c);
-                runNameTmp.append("_"+ Double.toString(c));
-                outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
-                outNameTmp.append("_"+ Double.toString(c) + ".res");
-            }
+
+            alg.setParameter(c);
+            runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
+            outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
+            outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k)+"_"+ QueryReduction+ Double.toString(QueryReduction_k) + ".res");
             File fdelet = new File(outNameTmp.toString());
             if(fdelet.exists()){
                 fdelet.delete();
@@ -161,12 +166,17 @@ public class Project1 {
                     if (qp.HasBooleanQuery(tmpTopic.getTopic())){
                         tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
                     }else{
-                        tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
+                        tmpQuery = qp.expandQeury(tmpTopic.getQuery(),QueryReduction_k,QueryReduction);
                     }
                     System.out.println("output query: "+tmpQuery.toString());
                     writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-                }else{
-                    tmpQuery = tmpTopic.getTitle();
+                }else{ // title
+                    if (!QueryReduction.equals("no")){
+                        tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
+                    }else{
+                        tmpQuery = tmpTopic.getTitle();
+                    }
+
                 }
                 TrecResults results = reranker.rerank(
                         tmpTopic.getTopic(),
@@ -189,7 +199,7 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk, String resPath, String queryType) throws IOException {
+    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk, String resPath, String queryType) throws Exception {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);

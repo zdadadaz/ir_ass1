@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class IDFr {
-    public String IDFr_reduce(String query, int K, IndexRef ref) throws IOException {
+    public String IDFr_reduce(String query, double K, IndexRef ref) throws IOException {
         String[] terms = query.split(" +");
 
         Index index = IndexFactory.of(ref);

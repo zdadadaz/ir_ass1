@@ -20,19 +20,24 @@ import org.terrier.structures.postings.IterablePosting;
 import org.terrier.structures.postings.Posting;
 
 public class KLI {
-    HashSet<String> docSet = new HashSet<>();
-    TrecResults initDoc;
-    HashSet<String> docIdSet;
+    private HashSet<String> docSet = new HashSet<>();
+    private TrecResults initDoc;
+    private HashSet<String> docIdSet;
+    private Integer resNum;
+
     public KLI(String resPath) throws IOException {
         this.docIdSet = new HashSet<String>();
         this.initDoc = new TrecResults(resPath);
+        Integer count = 0;
         for (TrecResult result : this.initDoc.getTrecResults()) {
             this.docIdSet.add(result.getDocID());
+            count += 1;
         }
+        resNum = count;
 
     }
 
-    public String KLI_reduce(String query, int K, IndexRef ref) throws IOException {
+    public String KLI_reduce(String query, double K, IndexRef ref) throws Exception {
         KLI_rank wm = new KLI_rank();
         String[] terms = query.split(" +");
         Index index = IndexFactory.of(ref);
@@ -43,9 +48,9 @@ public class KLI {
         long collectlength = index.getCollectionStatistics().getNumberOfTokens(); // how to get collection length ???
         List<IDFReduction.Pair> scoredTerms = new ArrayList<>(terms.length);
 
-//      what is direct index? if it will traverse all doc, then it will do it correctly.
-        PostingIndex directIndex =  index.getDirectIndex();
         DocumentIndex documentIndex = index.getDocumentIndex();
+        wm.setCollectionStatistics(index.getCollectionStatistics());
+        double withindoclength = index.getCollectionStatistics().getAverageDocumentLength()*this.resNum;
 
         // Run a search request using the original query.
         Manager queryManager = ManagerFactory.from(ref);
@@ -61,26 +66,20 @@ public class KLI {
 
 
             wm.setEntryStatistics(entry.getWritableEntryStatistics());
-            wm.setKeyFrequency(0);
+            wm.setKeyFrequency(0.0);
             // Prepare the weighting model for scoring.
             wm.prepare();
-//            IterablePosting ip = invertedIndex.getPostings(entry);
-            IterablePosting ip = directIndex.getPostings(entry);
+            IterablePosting ip = invertedIndex.getPostings(entry);
             double withindocTF = 0; // get initial intrieved document TF??
-            double withindoclength = 0; // how to get initial intrieved document length??
             while (ip.next() != IterablePosting.EOL) {
-//                System.out.println(ip.getId());
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
                     withindocTF += wm.score(ip);
 //                    withindoclength += wm.getDoclength();
 //                    withindoclength += documentIndex.getDocumentLength(docId);
                 }
-                withindoclength += 1;
             }
-            System.out.println(withindoclength + ":" + this.initDoc.size());
 
-            double docFreq = entry.getDocumentFrequency();
             double collectionTF = entry.getFrequency();
             double ptD = withindocTF/withindoclength;
             double ptC = collectionTF/collectlength;

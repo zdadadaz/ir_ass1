@@ -6,7 +6,6 @@ import org.terrier.querying.*;
 import org.terrier.terms.PorterStemmer;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class queryProcess {
         this.readQuery(foldername);
         this.resultPath = initResultPath;
     }
-    public ArrayList<String> expandQeury(ArrayList<String> terms, int k,String topic) throws IOException {
+    public ArrayList<String> expandQeury(ArrayList<String> terms, double k,String queryReduction) throws Exception {
         StringBuilder termlist = new StringBuilder();
         ArrayList<String> output = new ArrayList<String>();
         PorterStemmer ps = new PorterStemmer();
@@ -47,8 +46,14 @@ public class queryProcess {
             termlist.append(" " + s);
         }
 //        choose method of query reduction
-//        String out = this.runIDFreduction(termlist.toString(),k);
-        String out = this.runKLI(termlist.toString(),k);
+        String out;
+        if(queryReduction.equals("IDF")){
+            out = this.runIDFreduction(termlist.toString(),(int)k);
+        }else if (queryReduction.equals("IDFr")){
+            out = this.runIDFr(termlist.toString(),k);
+        }else {
+            out = this.runKLI(termlist.toString(),k);
+        }
         String [] outArr = out.split(" ");
         for (String s: outArr){
             s = ps.stem(s);
@@ -82,7 +87,14 @@ public class queryProcess {
         }
 
     }
-    public String runKLI(String query, int k ) throws IOException {
+    public String runIDFr(String query, double k ) throws Exception {
+        IndexRef ref = IndexRef.of(this.indexPath + ".properties");
+        IDFr expansion = new IDFr();
+        String idfrQuery = expansion.IDFr_reduce(query,k, ref);
+
+        return idfrQuery;
+    }
+    public String runKLI(String query, double k ) throws Exception {
         IndexRef ref = IndexRef.of(this.indexPath + ".properties");
         KLI expansion = new KLI(this.resultPath);
         String idfrQuery = expansion.KLI_reduce(query,k, ref);
