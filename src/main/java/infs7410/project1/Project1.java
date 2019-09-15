@@ -45,74 +45,81 @@ public class Project1 {
          * QueryReduction_ks:0 or number of left query or % of left query ex: {0} or {3,5,7} or  {0.85,0.5,0.3}
          * QueryReduction_resPath: path of init retrieved document set for KLI
          */
-        String Case = "train";
-        String year ="2017";
+        String Case = "test";
+        String [] years ={"2017","2018"};
         String Query = "title";
-        String QueryReduction = "IDFr";
-        String QueryReduction_resPath = "./2018trainboolean/bm25_0.45_1.2.res";
-        double[] QueryReduction_ks = {0.85,0.5,0.3};
-        for (double QueryReduction_k : QueryReduction_ks){
-            /**
-             * Training
-             * input: path: indexin path, outName: out put path name
-             * output: training res
-             */
-            String yearCasefolder = year+Case+Query+"_"+QueryReduction;
-            file = new File("./" + yearCasefolder +"/");
-            if(!file.exists()){
-                file.mkdirs();
-            }
-            File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
-            String qrels = "";
-            for (File f : files){
-                if (!f.getName().substring(0,1).equals(".")){
-                    qrels = f.getAbsolutePath();
-                }
-            }
-            if (qrels.equals("")){
-                throw new RuntimeException("Qrels is not exist");
-            }
+        String [] QueryReductions = {"IDFr","KLI"};
+        double[] QueryReduction_ks = {0.85};
+//        double[] QueryReduction_ks = {0.3};
+        for (String year:years){
+            String QueryReduction_resPath = "./"+year+"trainboolean/bm25_0.45_1.2.res";
+            for (String QueryReduction:QueryReductions){
+                for (double QueryReduction_k : QueryReduction_ks){
+                    /**
+                     * Training
+                     * input: path: indexin path, outName: out put path name
+                     * output: training res
+                     */
+                    String yearCasefolder = year+Case+Query+"_"+QueryReduction;
+                    file = new File("./" + yearCasefolder +"/");
+                    if(!file.exists()){
+                        file.mkdirs();
+                    }
+                    File[] files = new File(dirPath + "tar/"+year+"-TAR/"+Case+"ing/qrels/").listFiles();
+                    String qrels = "";
+                    for (File f : files){
+                        if (!f.getName().substring(0,1).equals(".")){
+                            qrels = f.getAbsolutePath();
+                        }
+                    }
+                    if (qrels.equals("")){
+                        throw new RuntimeException("Qrels is not exist");
+                    }
 
-            String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
+                    String path = dirPath + "tar/"+year+"-TAR/"+ Case + "ing/topics/";
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
-            Double [] coef = {1.0};
-            Double [] coefbm25 = {0.45};
-            training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
-            training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+                    Double [] coef = {1.0};
+                    Double [] coefbm25 = {0.45};
+                    training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+                    training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
 //        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
 
-            /**
-             * fusion
-             * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
-             * output: result of fusion for three methods.
-             */
+                    /**
+                     * fusion
+                     * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
+                     * output: result of fusion for three methods.
+                     */
 //            String trainSet = dirPath + "runs/"+year+"/";
 //            String fusionPath  = "./"+yearCasefolder+"/";
 //            if (Case.equals("test")){
 //                fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
 //            }
 
-            /**
-             * evaluation for map and udcg
-             * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
-             * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
-             */
-            String inputFolder = "./"+yearCasefolder+"/";
-            evalution_set(qrels, inputFolder, trec_evalPath);
+                    /**
+                     * evaluation for map and udcg
+                     * Input: qrels file path, inputfolder, output fodder (with two subfoler "set", "eval" in it)
+                     * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
+                     */
+                    String inputFolder = "./"+yearCasefolder+"/";
+                    evalution_set(qrels, inputFolder, trec_evalPath);
 
-            /**
-             * T-test
-             * input: folder contains eval, output path
-             * output: write p value out.
-             */
-            file = new File("./"+yearCasefolder+"/stat");
-            if(!file.exists()){
-                file.mkdirs();
+                    /**
+                     * T-test
+                     * input: folder contains eval, output path
+                     * output: write p value out.
+                     */
+                    file = new File("./"+yearCasefolder+"/stat");
+                    if(!file.exists()){
+                        file.mkdirs();
+                    }
+                    String foldername = "./"+yearCasefolder+"/eval/";
+                    String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
+                    evalution_stat( foldername, outPath);
+                }
             }
-            String foldername = "./"+yearCasefolder+"/eval/";
-            String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
-            evalution_stat( foldername, outPath);
+
         }
+
     }
     /**
      * Training Bm25 algorithm
@@ -172,7 +179,21 @@ public class Project1 {
                     writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
                 }else{ // title
                     if (!QueryReduction.equals("no")){
-                        tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
+                        StringBuilder termlist = new StringBuilder();
+                        String idfrQuery;
+                        for (String s : tmpTopic.getTitle()) {
+                            termlist.append(" " + s);
+                        }
+                        if (QueryReduction.equals("IDFr")){
+                            idfrQuery = qp.runIDFr(termlist.toString(),QueryReduction_k);
+                        }else { // KLI
+                            idfrQuery = qp.runKLI(termlist.toString(),QueryReduction_k);
+                        }
+                        String [] outArr = idfrQuery.split(" ");
+                        tmpQuery = new ArrayList<String>();
+                        for (String s: outArr){
+                            tmpQuery.add(s);
+                        }
                     }else{
                         tmpQuery = tmpTopic.getTitle();
                     }

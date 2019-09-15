@@ -49,11 +49,12 @@ public class queryProcess {
         String out;
         if(queryReduction.equals("IDF")){
             out = this.runIDFreduction(termlist.toString(),(int)k);
-        }else if (queryReduction.equals("IDFr")){
+        }else if(queryReduction.equals("IDFr")){
             out = this.runIDFr(termlist.toString(),k);
-        }else {
+        }else{
             out = this.runKLI(termlist.toString(),k);
         }
+
         String [] outArr = out.split(" ");
         for (String s: outArr){
             s = ps.stem(s);
@@ -88,6 +89,7 @@ public class queryProcess {
 
     }
     public String runIDFr(String query, double k ) throws Exception {
+        ArrayList<String> out = new ArrayList<String>();
         IndexRef ref = IndexRef.of(this.indexPath + ".properties");
         IDFr expansion = new IDFr();
         String idfrQuery = expansion.IDFr_reduce(query,k, ref);
@@ -95,6 +97,7 @@ public class queryProcess {
         return idfrQuery;
     }
     public String runKLI(String query, double k ) throws Exception {
+        ArrayList<String> out = new ArrayList<String>();
         IndexRef ref = IndexRef.of(this.indexPath + ".properties");
         KLI expansion = new KLI(this.resultPath);
         String idfrQuery = expansion.KLI_reduce(query,k, ref);

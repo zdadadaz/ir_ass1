@@ -41,6 +41,9 @@ public class stateTest {
             double[] scores1 = file1.getScoresForMeasure(measure[i]);
             double[] scores2 = file2.getScoresForMeasure(measure[i]);
 
+            if (scores1.length != scores2.length){
+                System.out.println("wrong");
+            }
             // Create a new TTest object to perform significance testing.
             TTest tTest = new TTest();
             double pvalue = tTest.pairedTTest(scores1, scores2);

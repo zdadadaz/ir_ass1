@@ -30,8 +30,10 @@ public class KLI {
         this.initDoc = new TrecResults(resPath);
         Integer count = 0;
         for (TrecResult result : this.initDoc.getTrecResults()) {
-            this.docIdSet.add(result.getDocID());
-            count += 1;
+            if(!docIdSet.contains(result.getDocID())){
+                this.docIdSet.add(result.getDocID());
+                count += 1;
+            }
         }
         resNum = count;
 
@@ -53,7 +55,7 @@ public class KLI {
         double withindoclength = index.getCollectionStatistics().getAverageDocumentLength()*this.resNum;
 
         // Run a search request using the original query.
-        Manager queryManager = ManagerFactory.from(ref);
+        //Manager queryManager = ManagerFactory.from(ref);
         for (String term : terms) {
             if(term.equals("")){
                 continue;
@@ -70,7 +72,7 @@ public class KLI {
             // Prepare the weighting model for scoring.
             wm.prepare();
             IterablePosting ip = invertedIndex.getPostings(entry);
-            double withindocTF = 0; // get initial intrieved document TF??
+            double withindocTF = 0;
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
