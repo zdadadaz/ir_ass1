@@ -21,22 +21,15 @@ import org.terrier.structures.postings.Posting;
 
 public class KLI {
     private HashSet<String> docSet = new HashSet<>();
-    private TrecResults initDoc;
-    private HashSet<String> docIdSet;
+    private ArrayList<String> initDoc;
     private Integer resNum;
 
-    public KLI(String resPath) throws IOException {
-        this.docIdSet = new HashSet<String>();
-        this.initDoc = new TrecResults(resPath);
-        Integer count = 0;
-        for (TrecResult result : this.initDoc.getTrecResults()) {
-            if(!docIdSet.contains(result.getDocID())){
-                this.docIdSet.add(result.getDocID());
-                count += 1;
-            }
+    public KLI(ArrayList<String>  docIds) throws IOException {
+        this.initDoc = docIds;
+        this.resNum = initDoc.size();
+        for (String s: docIds){
+            docSet.add(s);
         }
-        resNum = count;
-
     }
 
     public String KLI_reduce(String query, double K, IndexRef ref) throws Exception {
@@ -76,7 +69,7 @@ public class KLI {
             double withindoclength = 0;
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
-                if (docIdSet.contains(docId)) {
+                if (this.docSet.contains(docId)) {
                     withindocTF += wm.score(ip);
                     withindoclength += wm.getDoclength();
                 }

@@ -27,13 +27,13 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-         String indexPath = "./var/index";
-         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+//         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+//         String indexPath = "./var/index";
+//         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
 
-//       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-//       String indexPath = "./var/index";
-//       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+       String indexPath = "./var/index";
+       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -52,7 +52,6 @@ public class Project1 {
         double[] QueryReduction_ks = {0.85};
 //        double[] QueryReduction_ks = {0.3};
         for (String year:years){
-            String QueryReduction_resPath = "./"+year+"trainboolean/bm25_0.45_1.2.res";
             for (String QueryReduction:QueryReductions){
                 for (double QueryReduction_k : QueryReduction_ks){
                     /**
@@ -80,8 +79,8 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
-                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
+                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
 
                     /**
                      * fusion
@@ -131,12 +130,11 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef,String resPath, String queryType, String QueryReduction, double QueryReduction_k) throws Exception {
+    public static void training(String indexPath, String path, String RunName, String outName, Double [] coef, String queryType, String QueryReduction, double QueryReduction_k) throws Exception {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         Reranker reranker = new Reranker(index);
         String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
-        queryProcess qp = new queryProcess(queryFolder,resPath);
 
         WeightingModel alg;
         switch(RunName) {
@@ -170,6 +168,8 @@ public class Project1 {
                 System.out.println("Title: "+ tmpTopic.getTitle());
                 System.out.println("Query: "+ tmpTopic.getQuery());
                 ArrayList<String> tmpQuery;
+                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
+
                 if (queryType.equals("boolean")){
                     if (qp.HasBooleanQuery(tmpTopic.getTopic())){
                         tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
@@ -209,72 +209,6 @@ public class Project1 {
                 results.setRunName(runNameTmp.toString()); // "example1"
                 results.write(outNameTmp.toString()); //"example1.res"
             }
-        }
-
-    }
-    /**
-     * Training Bm25 algorithm
-     *
-     * @param path Indexing path
-     * @param RunName Run Name
-     * @param outName output result name
-     * @param coef array of adjust coeficient if exist
-     * @require {@code path != null,RunName != null,outName != null, coef != null}
-     */
-    public static void training25(String indexPath, String path, String RunName, String outName, Double [] coef,Double [] coefk, String resPath, String queryType) throws Exception {
-        Index index = Index.createIndex(indexPath, "pubmed");
-        InputFile Alltopic = new InputFile(path);
-        Reranker reranker = new Reranker(index);
-        String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
-        queryProcess qp = new queryProcess(queryFolder,resPath);
-
-        WeightingModel alg = new BM25();
-
-        for (double c: coef)  {
-            for (double k:coefk){
-                System.out.println("Coeficient : " + Double.toString(c));
-                System.out.println("Coeficient k : " + Double.toString(k));
-
-                StringBuilder runNameTmp = new StringBuilder(RunName);
-                StringBuilder outNameTmp = new StringBuilder(outName);
-
-                alg.setParameter(c);
-//                alg.setParameter2(k);
-                runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
-                outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
-                outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k) + ".res");
-                File fdelet = new File(outNameTmp.toString());
-                if(fdelet.exists()){
-                    fdelet.delete();
-                }
-               for (Integer i=0; i < Alltopic.getFileSize(); i++){
-                    topicInfo tmpTopic = Alltopic.getOutput(i);
-                    System.out.println("filename: "+ tmpTopic.getFilename());
-                    System.out.println("Topic: "+ tmpTopic.getTopic());
-                    System.out.println("Title: "+ tmpTopic.getTitle());
-                    ArrayList<String> tmpQuery;
-                    if (queryType.equals("boolean")){
-                       if (qp.HasBooleanQuery(tmpTopic.getTopic())){
-                           tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
-                       }else{
-                           tmpQuery = qp.expandQeury(tmpTopic.getQuery(),7,tmpTopic.getTopic());
-                       }
-                       System.out.println("output query: "+tmpQuery.toString());
-                       writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-                    }else{
-                       tmpQuery = tmpTopic.getTitle();
-                    }
-                    TrecResults results = reranker.rerank(
-                            tmpTopic.getTopic(),
-//                            tmpTopic.getTitle(),
-                            tmpQuery,
-                            tmpTopic.getPid(),
-                            alg);
-                    results.setRunName(runNameTmp.toString()); // "example1"
-                    results.write(outNameTmp.toString()); //"example1.res"
-                }
-            }
-
         }
 
     }
