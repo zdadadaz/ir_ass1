@@ -52,7 +52,7 @@ public class KLI {
 
         DocumentIndex documentIndex = index.getDocumentIndex();
         wm.setCollectionStatistics(index.getCollectionStatistics());
-        double withindoclength = index.getCollectionStatistics().getAverageDocumentLength()*this.resNum;
+//        double withindoclength = index.getCollectionStatistics().getAverageDocumentLength()*this.resNum;
 
         // Run a search request using the original query.
         //Manager queryManager = ManagerFactory.from(ref);
@@ -73,12 +73,12 @@ public class KLI {
             wm.prepare();
             IterablePosting ip = invertedIndex.getPostings(entry);
             double withindocTF = 0;
+            double withindoclength = 0;
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
                     withindocTF += wm.score(ip);
-//                    withindoclength += wm.getDoclength();
-//                    withindoclength += documentIndex.getDocumentLength(docId);
+                    withindoclength += wm.getDoclength();
                 }
             }
 

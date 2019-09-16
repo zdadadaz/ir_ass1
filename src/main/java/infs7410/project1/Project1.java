@@ -27,13 +27,13 @@ import java.util.List;
 public class Project1 {
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-        String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-        String indexPath = "./var/index";
-        String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+         String indexPath = "./var/index";
+         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
 
-//        String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-//        String indexPath = "./var/index";
-//        String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//       String indexPath = "./var/index";
+//       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -46,9 +46,9 @@ public class Project1 {
          * QueryReduction_resPath: path of init retrieved document set for KLI
          */
         String Case = "test";
-        String [] years ={"2017","2018"};
+        String [] years ={"2017"};
         String Query = "title";
-        String [] QueryReductions = {"IDFr","KLI"};
+        String [] QueryReductions = {"KLI"};
         double[] QueryReduction_ks = {0.85};
 //        double[] QueryReduction_ks = {0.3};
         for (String year:years){
@@ -80,9 +80,8 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                    training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
-                    training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
-//        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
 
                     /**
                      * fusion
@@ -101,7 +100,7 @@ public class Project1 {
                      * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
                      */
                     String inputFolder = "./"+yearCasefolder+"/";
-                    evalution_set(qrels, inputFolder, trec_evalPath);
+                     evalution_set(qrels, inputFolder, trec_evalPath);
 
                     /**
                      * T-test
@@ -114,6 +113,8 @@ public class Project1 {
                     }
                     String foldername = "./"+yearCasefolder+"/eval/";
                     String outPath = "./"+yearCasefolder+"/stat/"+Case+".stat";
+//                    String foldername = "./"+"eval/";
+//                    String outPath = "./stat/"+Case+".stat";
                     evalution_stat( foldername, outPath);
                 }
             }
