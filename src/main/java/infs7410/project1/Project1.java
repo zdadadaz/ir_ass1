@@ -46,9 +46,9 @@ public class Project1 {
          * QueryReduction_resPath: path of init retrieved document set for KLI
          */
         String Case = "test";
-        String [] years ={"2017","2018"};
+        String [] years ={"2017"};
         String Query = "title";
-        String [] QueryReductions = {"IDFr","KLI"};
+        String [] QueryReductions = {"no"};
         double[] QueryReduction_ks = {0.85};
 //        double[] QueryReduction_ks = {0.3};
         for (String year:years){
@@ -80,7 +80,7 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                    training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
+//                    training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
 //        training25(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25,kcoefbm25, QueryReduction_resPath, Query,QueryReduction, QueryReduction_k);
 
