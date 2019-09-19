@@ -1,5 +1,6 @@
 package infs7410.query;
 
+import infs7410.project1.Project1;
 import infs7410.project1.TrecResult;
 import infs7410.project1.TrecResults;
 import org.terrier.querying.IndexRef;
@@ -23,12 +24,26 @@ public class KLI {
     private HashSet<String> docSet = new HashSet<>();
     private ArrayList<String> initDoc;
     private Integer resNum;
+    private double withindoclength;
 
-    public KLI(ArrayList<String>  docIds) throws IOException {
+    public KLI(ArrayList<String>  docIds) {
         this.initDoc = docIds;
         this.resNum = initDoc.size();
         for (String s: docIds){
             docSet.add(s);
+        }
+
+    }
+    public void readWithinDoclength(Index index) throws IOException {
+        DocumentIndex documentIndex = index.getDocumentIndex();
+        this.withindoclength = 0;
+        for ( String docno : this.initDoc){
+            //if docno doesn't exist return -40000
+            int docId = Project1.docNoToDocId.getOrDefault(docno, -4000);
+            if (docId != -4000) {
+                this.withindoclength += documentIndex.getDocumentLength(docId);
+            }
+
         }
     }
 
@@ -42,10 +57,10 @@ public class KLI {
         double N = index.getCollectionStatistics().getNumberOfDocuments();
         long collectlength = index.getCollectionStatistics().getNumberOfTokens(); // how to get collection length ???
         List<IDFReduction.Pair> scoredTerms = new ArrayList<>(terms.length);
+        this.readWithinDoclength(index);
 
         DocumentIndex documentIndex = index.getDocumentIndex();
         wm.setCollectionStatistics(index.getCollectionStatistics());
-//        double withindoclength = index.getCollectionStatistics().getAverageDocumentLength()*this.resNum;
 
         // Run a search request using the original query.
         //Manager queryManager = ManagerFactory.from(ref);
@@ -66,17 +81,15 @@ public class KLI {
             wm.prepare();
             IterablePosting ip = invertedIndex.getPostings(entry);
             double withindocTF = 0;
-            double withindoclength = 0;
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (this.docSet.contains(docId)) {
                     withindocTF += wm.score(ip);
-                    withindoclength += wm.getDoclength();
                 }
             }
 
             double collectionTF = entry.getFrequency();
-            double ptD = withindocTF/withindoclength;
+            double ptD = withindocTF/this.withindoclength;
             double ptC = collectionTF/collectlength;
 
             double kli = ptD * Math.log(ptD / ptC);

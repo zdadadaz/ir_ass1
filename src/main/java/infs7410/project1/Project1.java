@@ -6,11 +6,14 @@ import infs7410.util.topicInfo;
 import infs7410.query.queryProcess;
 import infs7410.evaluation.evalution;
 import org.apache.log4j.BasicConfigurator;
+import org.terrier.querying.IndexRef;
 import org.terrier.structures.Index;
 import org.terrier.matching.models.WeightingModel;
 import org.terrier.matching.models.BM25;
 
 import infs7410.evaluation.stateTest;
+import org.terrier.structures.IndexFactory;
+import org.terrier.structures.MetaIndex;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,11 +23,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
+
 /**
  * main function - Run training, testing, evaluation and T-test
  * @author Chien-chi chen
  */
 public class Project1 {
+    public static HashMap<String, Integer> docNoToDocId = new HashMap<>(30000000, 1);
+
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
 //         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
@@ -44,16 +51,20 @@ public class Project1 {
          * QueryReduction: no or IDF or IDFr or KLI
          * QueryReduction_ks:0 or number of left query or % of left query ex: {0} or {3,5,7} or  {0.85,0.5,0.3}
          * QueryReduction_resPath: path of init retrieved document set for KLI
+         * fusionFlag: Switch for fusion 0 or 1
          */
-        String Case = "test";
-        String [] years ={"2017"};
+        String Case = "train";
+        String [] years ={"2017","2018"};
         String Query = "title";
         String [] QueryReductions = {"KLI"};
-        double[] QueryReduction_ks = {0.85};
-//        double[] QueryReduction_ks = {0.3};
-        for (String year:years){
-            for (String QueryReduction:QueryReductions){
-                for (double QueryReduction_k : QueryReduction_ks){
+        double[] QueryReduction_ks = {0.85,0.5,0.3};
+        int fusionFlag = 0;
+        for (String QueryReduction:QueryReductions){
+            if(QueryReduction.equals("KLI")){
+                buildDocID2Docno(indexPath);
+            }
+            for (double QueryReduction_k : QueryReduction_ks){
+                for (String year:years){
                     /**
                      * Training
                      * input: path: indexin path, outName: out put path name
@@ -87,11 +98,11 @@ public class Project1 {
                      * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
                      * output: result of fusion for three methods.
                      */
-//            String trainSet = dirPath + "runs/"+year+"/";
-//            String fusionPath  = "./"+yearCasefolder+"/";
-//            if (Case.equals("test")){
-//                fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
-//            }
+                    String trainSet = dirPath + "runs/"+year+"/";
+                    String fusionPath  = "./"+yearCasefolder+"/";
+                    if (fusionFlag == 1 && Case.equals("test")){
+                        fusion_main(qrels,trainSet,fusionPath,trec_evalPath);
+                    }
 
                     /**
                      * evaluation for map and udcg
@@ -389,6 +400,18 @@ public class Project1 {
         }
         os.flush();
         os.close();
+    }
+
+    public static void buildDocID2Docno(String indexPath) throws IOException {
+        IndexRef ref = IndexRef.of(indexPath + "/pubmed.properties");
+        Index index = IndexFactory.of(ref);
+        MetaIndex meta = index.getMetaIndex();
+        for(int idx = 0; idx < index.getCollectionStatistics().getNumberOfDocuments(); idx++) {
+            String docno = meta.getItem("docno", idx);
+            //docno is actual document id for docId==idx
+            //add a mapping from docno to docid "idx"
+            docNoToDocId.put(docno, idx);
+        }
     }
 
 }
