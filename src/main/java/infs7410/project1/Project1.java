@@ -56,7 +56,7 @@ public class Project1 {
         String Case = "train";
         String [] years ={"2017","2018"};
         String Query = "title";
-        String [] QueryReductions = {"KLI"};
+        String [] QueryReductions = {"IDFr","KLI"};
         double[] QueryReduction_ks = {0.85,0.5,0.3};
         int fusionFlag = 0;
         for (String QueryReduction:QueryReductions){
