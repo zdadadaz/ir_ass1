@@ -29,23 +29,24 @@ public class KLI {
     public KLI(ArrayList<String>  docIds) {
         this.initDoc = docIds;
         this.resNum = initDoc.size();
+        this.withindoclength = 0;
         for (String s: docIds){
             docSet.add(s);
         }
 
     }
-    public void readWithinDoclength(Index index) throws IOException {
-        DocumentIndex documentIndex = index.getDocumentIndex();
-        this.withindoclength = 0;
-        for ( String docno : this.initDoc){
-            //if docno doesn't exist return -40000
-            int docId = Project1.docNoToDocId.getOrDefault(docno, -4000);
-            if (docId != -4000) {
-                this.withindoclength += documentIndex.getDocumentLength(docId);
-            }
+    // public void readWithinDoclength(Index index) throws IOException {
+    //     DocumentIndex documentIndex = index.getDocumentIndex();
+    //     this.withindoclength = 0;
+    //     for ( String docno : this.initDoc){
+    //         //if docno doesn't exist return -40000
+    //         int docId = Project1.docNoToDocId.getOrDefault(docno, -4000);
+    //         if (docId != -4000) {
+    //             this.withindoclength += documentIndex.getDocumentLength(docId);
+    //         }
 
-        }
-    }
+    //     }
+    // }
 
     public String KLI_reduce(String query, double K, IndexRef ref) throws Exception {
         KLI_rank wm = new KLI_rank();
@@ -57,7 +58,7 @@ public class KLI {
         double N = index.getCollectionStatistics().getNumberOfDocuments();
         long collectlength = index.getCollectionStatistics().getNumberOfTokens(); // how to get collection length ???
         List<IDFReduction.Pair> scoredTerms = new ArrayList<>(terms.length);
-        this.readWithinDoclength(index);
+        // this.readWithinDoclength(index);
 
         DocumentIndex documentIndex = index.getDocumentIndex();
         wm.setCollectionStatistics(index.getCollectionStatistics());
@@ -74,7 +75,6 @@ public class KLI {
                 continue;
             }
 
-
             wm.setEntryStatistics(entry.getWritableEntryStatistics());
             wm.setKeyFrequency(0.0);
             // Prepare the weighting model for scoring.
@@ -85,6 +85,7 @@ public class KLI {
                 String docId = meta.getItem("docno", ip.getId());
                 if (this.docSet.contains(docId)) {
                     withindocTF += wm.score(ip);
+                    this.withindoclength += ip.getDocumentLength();
                 }
             }
 
