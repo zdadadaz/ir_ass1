@@ -110,7 +110,7 @@ public class Project1 {
                      * Output: mean of Precision recall map in set folder, each topic of Precision recall map in eval folder
                      */
                     String inputFolder = "./"+yearCasefolder+"/";
-                     evalution_set(qrels, inputFolder, trec_evalPath);
+                    evalution_set(qrels, inputFolder, trec_evalPath);
 
                     /**
                      * T-test
