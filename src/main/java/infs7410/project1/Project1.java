@@ -30,7 +30,7 @@ import java.util.List;
  * @author Chien-chi chen
  */
 public class Project1 {
-    public static HashMap<String, Integer> docNoToDocId = new HashMap<>(30000000, 1);
+    // public static HashMap<String, Integer> docNoToDocId = new HashMap<>(30000000, 1);
 
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
@@ -60,9 +60,9 @@ public class Project1 {
         double[] QueryReduction_ks = {0.85};
         int fusionFlag = 0;
         for (String QueryReduction:QueryReductions){
-            if(QueryReduction.equals("KLI")){
-                buildDocID2Docno(indexPath);
-            }
+            // if(QueryReduction.equals("KLI")){
+            //     buildDocID2Docno(indexPath);
+            // }
             for (double QueryReduction_k : QueryReduction_ks){
                 for (String year:years){
                     /**
@@ -402,16 +402,16 @@ public class Project1 {
         os.close();
     }
 
-    public static void buildDocID2Docno(String indexPath) throws IOException {
-        IndexRef ref = IndexRef.of(indexPath + "/pubmed.properties");
-        Index index = IndexFactory.of(ref);
-        MetaIndex meta = index.getMetaIndex();
-        for(int idx = 0; idx < index.getCollectionStatistics().getNumberOfDocuments(); idx++) {
-            String docno = meta.getItem("docno", idx);
-            //docno is actual document id for docId==idx
-            //add a mapping from docno to docid "idx"
-            docNoToDocId.put(docno, idx);
-        }
-    }
+    // public static void buildDocID2Docno(String indexPath) throws IOException {
+    //     IndexRef ref = IndexRef.of(indexPath + "/pubmed.properties");
+    //     Index index = IndexFactory.of(ref);
+    //     MetaIndex meta = index.getMetaIndex();
+    //     for(int idx = 0; idx < index.getCollectionStatistics().getNumberOfDocuments(); idx++) {
+    //         String docno = meta.getItem("docno", idx);
+    //         //docno is actual document id for docId==idx
+    //         //add a mapping from docno to docid "idx"
+    //         docNoToDocId.put(docno, idx);
+    //     }
+    // }
 
 }
