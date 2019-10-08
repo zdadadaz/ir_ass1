@@ -17,11 +17,11 @@ public class queryProcess {
     private String indexPath = "./var/index/pubmed";
     private HashSet<String> queryList = new HashSet<String>();
     private HashMap<String, ArrayList<String>> queryhash = new HashMap<String, ArrayList<String>>();
-    private String resultPath;
+    private ArrayList<String>  referenceID;
 
-    public queryProcess(String foldername, String initResultPath) throws IOException {
+    public queryProcess(String foldername,ArrayList<String> docid) throws IOException {
         this.readQuery(foldername);
-        this.resultPath = initResultPath;
+        this.referenceID = docid;
     }
     public ArrayList<String> expandQeury(ArrayList<String> terms, double k,String queryReduction) throws Exception {
         StringBuilder termlist = new StringBuilder();
@@ -96,10 +96,10 @@ public class queryProcess {
 
         return idfrQuery;
     }
-    public String runKLI(String query, double k ) throws Exception {
+    public String runKLI(String query, double k) throws Exception {
         ArrayList<String> out = new ArrayList<String>();
         IndexRef ref = IndexRef.of(this.indexPath + ".properties");
-        KLI expansion = new KLI(this.resultPath);
+        KLI expansion = new KLI(this.referenceID);
         String idfrQuery = expansion.KLI_reduce(query,k, ref);
 
         return idfrQuery;
