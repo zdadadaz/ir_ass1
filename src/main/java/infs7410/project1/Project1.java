@@ -1,7 +1,7 @@
 package infs7410.project1;
 import infs7410.ranking.TF_IDF;
 import infs7410.fusion.Fusion_run;
-//import infs7410.ranking.BM25;
+import infs7410.ranking.BM25_rsj;
 import infs7410.util.topicInfo;
 import infs7410.query.queryProcess;
 import infs7410.evaluation.evalution;
@@ -54,10 +54,10 @@ public class Project1 {
          * fusionFlag: Switch for fusion 0 or 1
          */
         String Case = "train";
-        String [] years ={"2017"};
+        String [] years ={"2018"};
         String Query = "title";
-        String [] QueryReductions = {"KLI"};
-        double[] QueryReduction_ks = {0.85};
+        String [] QueryReductions = {"no"};
+        double[] QueryReduction_ks = {0};
         int fusionFlag = 0;
         for (String QueryReduction:QueryReductions){
             // if(QueryReduction.equals("KLI")){
@@ -90,9 +90,9 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
-                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
-
+//                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
+//                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
+                     training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./2018train/bm25_0.45_1.2.res", coefbm25,qrels);
                     /**
                      * fusion
                      * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
@@ -132,6 +132,65 @@ public class Project1 {
         }
 
     }
+    /**
+     * Training relevance feedback algorithm
+     *
+     * @param path Indexing path
+     * @param RunName Run Name
+     * @param outName output result name
+     * @param coef array of adjust coeficient if exist
+     * @require {@code path != null,RunName != null,outName != null, coef != null}
+     */
+    public static void training_relevanceFeedbck(String indexPath, String path, String RunName, String outName,String baselinePath, Double [] coef, String qrelsPath) throws IOException {
+        Index index = Index.createIndex(indexPath, "pubmed");
+        InputFile Alltopic = new InputFile(path);
+        String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
+
+//      read index, qrels, and res file from baseline
+        BM25_rsj alg = new BM25_rsj();
+        relevanceFeedback rf = new relevanceFeedback(index);
+        rf.readqrels(qrelsPath);
+        TrecResults baseResults = new TrecResults(baselinePath);
+        for (double c: coef)  {
+            double k = 1.2;
+            System.out.println("Coeficient : " + Double.toString(c));
+            System.out.println("Coeficient k : " + Double.toString(k));
+            StringBuilder runNameTmp = new StringBuilder(RunName);
+            StringBuilder outNameTmp = new StringBuilder(outName);
+
+            alg.setParameter(c);
+            runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
+            outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
+            outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k)+ ".res");
+            File fdelet = new File(outNameTmp.toString());
+            if(fdelet.exists()){
+                fdelet.delete();
+            }
+            for (Integer i=0; i < Alltopic.getFileSize(); i++){
+                topicInfo tmpTopic = Alltopic.getOutput(i);
+                System.out.println("filename: "+ tmpTopic.getFilename());
+                System.out.println("Topic: "+ tmpTopic.getTopic());
+                System.out.println("Title: "+ tmpTopic.getTitle());
+                System.out.println("Query: "+ tmpTopic.getQuery());
+                ArrayList<String> tmpQuery;
+                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
+
+                TrecResults results = rf.runBM25_RSJ(
+                        tmpTopic.getTopic(),
+                        tmpTopic.getTitle(),
+                        tmpTopic.getPid(),
+                        baseResults,
+                        alg);
+                results.setRunName(runNameTmp.toString()); // "example1"
+                results.write(outNameTmp.toString()); //"example1.res"
+            }
+        }
+
+
+
+    }
+
+
     /**
      * Training Bm25 algorithm
      *

@@ -1,10 +1,7 @@
 package infs7410.project1;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TrecResults {
 
@@ -68,6 +65,21 @@ public class TrecResults {
         return topics;
     }
 
+    public HashMap<String,Integer> getDocByTopics(String topicName) {
+//    public String [] getDocByTopics(String topicName) {
+        HashMap<String,Integer> topics = new HashMap<String,Integer>();
+        for (TrecResult result : trecResults) {
+            if (result.getTopic().equals(topicName)){
+                topics.put(result.getDocID(),result.getRank());
+            }
+        }
+//        String [] output = new String [topics.size()];
+//        for (Map.Entry<String, Integer> entry : topics.entrySet()) {
+//            output[entry.getValue()] = entry.getKey();
+//        }
+        return topics;
+    }
+
     public void write(String filename) throws IOException {
         OutputStream os = new FileOutputStream(filename,true);
         for (TrecResult result : trecResults) {
@@ -87,8 +99,21 @@ public class TrecResults {
 
     private TrecResult splitLine(String line) {
         String[] parts = line.split("\\s+");
+//        if (!isNumeric(parts[3])){
+//            System.out.println("error");
+//        }
         int rank = Integer.valueOf(parts[3]);
         double score = Double.valueOf(parts[4]);
         return new TrecResult(parts[0], parts[2], rank, score, parts[5]);
     }
+
+    public boolean isNumeric(String strNum) {
+        try {
+            double d = Double.parseDouble(strNum);
+        } catch (NumberFormatException | NullPointerException nfe) {
+            return false;
+        }
+        return true;
+    }
+
 }
