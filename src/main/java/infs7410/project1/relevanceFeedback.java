@@ -114,8 +114,8 @@ public class relevanceFeedback {
                             ri += 1;
                         }
                     }
-                    System.out.println(doc_R[rank].toString() + ri.toString());
-                    bm25_rsj.set_R_ri(doc_R[rank],ri);
+//                    System.out.println(doc_R[rank].toString() + ri.toString());
+                    bm25_rsj.set_R_ri(doc_R[rank-1],ri);
                     score = bm25_rsj.score(ip);
                     if (!scores.containsKey(docId)) {
                         scores.put(docId, score);

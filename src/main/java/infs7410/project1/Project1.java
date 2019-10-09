@@ -34,13 +34,13 @@ public class Project1 {
 
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//         String indexPath = "./var/index";
-//         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+         String indexPath = "./var/index";
+         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
 
-       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-       String indexPath = "./var/index";
-       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//       String indexPath = "./var/index";
+//       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -54,7 +54,7 @@ public class Project1 {
          * fusionFlag: Switch for fusion 0 or 1
          */
         String Case = "test";
-        String [] years ={"2018"};
+        String [] years ={"2017","2018"};
         String Query = "title";
         String [] QueryReductions = {"no"};
         double[] QueryReduction_ks = {0};
@@ -90,9 +90,10 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
+                    Double [] coefbm25_rsj = {0.45};
 //                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
-//                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
-                     training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./2018test/bm25_0.45_1.2.res", coefbm25,qrels);
+                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
+                     training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./"+yearCasefolder+"/bm25_0.45_1.2_no0.0.res", coefbm25_rsj,qrels);
                     /**
                      * fusion
                      * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
@@ -135,7 +136,8 @@ public class Project1 {
     /**
      * Training relevance feedback algorithm
      *
-     * @param path Indexing path
+     * @param indexPath Indexing path
+     * @param path Topic path
      * @param RunName Run Name
      * @param outName output result name
      * @param coef array of adjust coeficient if exist
@@ -161,7 +163,7 @@ public class Project1 {
             alg.setParameter(c);
             runNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k));
             outNameTmp.delete(outNameTmp.length()-4,outNameTmp.length());
-            outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k)+ ".res");
+            outNameTmp.append("_"+ Double.toString(c)+"_"+ Double.toString(k)+ "_rf.res");
             File fdelet = new File(outNameTmp.toString());
             if(fdelet.exists()){
                 fdelet.delete();
@@ -185,8 +187,6 @@ public class Project1 {
                 results.write(outNameTmp.toString()); //"example1.res"
             }
         }
-
-
 
     }
 
