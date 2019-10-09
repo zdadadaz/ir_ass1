@@ -39,9 +39,9 @@ public class relevanceFeedback {
         int rel = Integer.valueOf(parts[3]);
 
         // debug ////////////////////// 2018 qrel has no 1
-        if (rel ==1){
-            System.out.println("check rel == 1");
-        }
+//        if (rel ==1){
+//            System.out.println("check rel == 1");
+//        }
         if (this.qrels.containsKey(parts[0])){
             //  read existing doc_map
             HashMap<String,Integer> doc_map = qrels.get(parts[0]);
@@ -110,10 +110,11 @@ public class relevanceFeedback {
                     // accumulate ri from rank 1 to rank i, where i is current found document
                     Integer ri = 0;
                     for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
-                        if (ri_arr[rr] == 1){
+                        if (ri_arr[rr] != null){
                             ri += 1;
                         }
                     }
+                    System.out.println(doc_R[rank].toString() + ri.toString());
                     bm25_rsj.set_R_ri(doc_R[rank],ri);
                     score = bm25_rsj.score(ip);
                     if (!scores.containsKey(docId)) {

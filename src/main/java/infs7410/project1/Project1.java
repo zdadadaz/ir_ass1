@@ -53,7 +53,7 @@ public class Project1 {
          * QueryReduction_resPath: path of init retrieved document set for KLI
          * fusionFlag: Switch for fusion 0 or 1
          */
-        String Case = "train";
+        String Case = "test";
         String [] years ={"2018"};
         String Query = "title";
         String [] QueryReductions = {"no"};
@@ -92,7 +92,7 @@ public class Project1 {
                     Double [] coefbm25 = {0.45};
 //                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
 //                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
-                     training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./2018train/bm25_0.45_1.2.res", coefbm25,qrels);
+                     training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./2018test/bm25_0.45_1.2.res", coefbm25,qrels);
                     /**
                      * fusion
                      * input: qrels: groundtruth, trainSet: run.res folder, fusionPath:output path
