@@ -63,8 +63,6 @@ public class relevanceFeedback {
         bm25_rsj.setCollectionStatistics(index.getCollectionStatistics());
         HashSet<String> docIdSet = new HashSet<String>(docIds);
 
-        HashMap<String, Double> scores = new HashMap<>();
-
         //// calculate baseline result of R ////
         topic = topic.replace(" ","");
         HashMap<String, Integer> doc_map = baseResult.getDocByTopics(topic);
@@ -73,45 +71,43 @@ public class relevanceFeedback {
             doc_arr[entry.getValue() - 1] = entry.getKey(); // rank - 1 = position
         }
         Integer [] doc_R = caculate_R(doc_arr, topic);
-        Double [] final_scores = new Double [doc_map.size()];
-        String [] final_doc_list = new String [doc_map.size()];
 
         //// calculate baseline result of ri.
+        //// <term, ri>
         HashMap<String, Integer []> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, doc_map, meta);
 
-
-//      init not sure is neccessary
         // init
-        HashMap<String, Double> scores_new = reranker(topic,queryTerms,lex,invertedIndex,bm25_rsj,meta,docIdSet,doc_map,doc_R);
-        Double [] scores_new_arr = new Double [scores_new.size()]; // rank from 1
-        for (int ss = 0; ss < doc_arr.length; ss++) {
-            scores_new_arr[ss] = scores_new.get(doc_arr[0]);
-        }
-        final_scores[0] = scores_new_arr[0];
-        final_doc_list[0] = doc_arr[0];
+        TrecResults results = new TrecResults();
+        TrecResults scores_new = baseResult;
+        Set<String > include_doc = new HashSet<>();
+        include_doc.add(doc_arr[0]);
+        results.getTrecResults().add(scores_new.getTrecResults().get(0));
 
+        int curIndx = 0;
         //// run baseline result and re-rank
         for (int i = 1; i<doc_arr.length; i++){
-            int assign = i+1;
             String cur_doc = doc_arr[i];
-
-//          not decide the data structure to store score yet
-//          if R change then do re rank, otherwise, use the old one to assign score and document
-            if (doc_R[i] != doc_R[i-1]){
-                scores_new = reranker(topic,queryTerms,lex,invertedIndex,bm25_rsj,meta,docIdSet,doc_map,doc_R);
-                scores_new_arr = new Double [scores_new.size()]; // rank from 1
-                for (int ss = 0; ss < doc_arr.length; ss++) {
-                    scores_new_arr[ss] = scores_new.get(doc_arr[0]);
-                }
+            // if R change then do re rank,
+            if (doc_R[i] != 0 && doc_R[i] != doc_R[i-1]) {
+                scores_new = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, doc_R,rihash, i,include_doc);
+                curIndx = 0;
             }
-
+            // otherwise, use the old one to assign score and document
+            results.getTrecResults().add(scores_new.getTrecResults().get(curIndx));
+            curIndx += 1;
+            include_doc.add(cur_doc);
         }
 
+        // Assign the rank to the documents.
+        for (int i = 0; i < results.getTrecResults().size(); i++) {
+            results.getTrecResults().get(i).setRank(i + 1);
+            results.getTrecResults().get(i).setRunName("bm25_rsj");
+        }
 
-
+        return results;
     }
 
-    public HashMap<String, Double> reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer [] doc_R) throws IOException {
+    public TrecResults reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer [] doc_R, HashMap<String, Integer []> ri_hash,Integer rel_index,Set<String > include_doc) throws IOException {
         ////   reranker //////
         HashMap<String, Double> scores = new HashMap<>();
         // Iterate over all query terms.
@@ -121,6 +117,15 @@ public class relevanceFeedback {
                 continue; // This term is not in the index, go to next document.
             }
 
+            Integer [] ri_arr = ri_hash.get(queryTerm);
+            Integer rank = rel_index;
+            // accumulate ri from rank 1 to rank i, where i is current found document
+            Integer ri = 0;
+            for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
+                if (ri_arr[rr] != null){
+                    ri += 1;
+                }
+            }
             // Obtain entry statistics.
             bm25_rsj.setEntryStatistics(entry.getWritableEntryStatistics());
 
@@ -142,14 +147,6 @@ public class relevanceFeedback {
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
-                    Integer rank = doc_map.get(docId);
-                    // accumulate ri from rank 1 to rank i, where i is current found document
-                    Integer ri = 0;
-                    for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
-                        if (ri_arr[rr] != null){
-                            ri += 1;
-                        }
-                    }
 //                    System.out.println(doc_R[rank].toString() + ri.toString());
                     bm25_rsj.set_R_ri(doc_R[rank-1],ri);
                     score = bm25_rsj.score(ip);
@@ -170,27 +167,29 @@ public class relevanceFeedback {
 
 
 //        // Create a results list from the scored documents.
-//        TrecResults results = new TrecResults();
-//        for (Map.Entry<String, Double> entry : scores.entrySet()) {
-//            results.getTrecResults().add(new TrecResult(
-//                    topic,
-//                    entry.getKey(),
-//                    0,
-//                    entry.getValue(),
-//                    null
-//            ));
-//        }
-//
-//        // Sort the documents by the score assigned by the weighting model.
-//        Collections.sort(results.getTrecResults());
-//        Collections.reverse(results.getTrecResults());
+        TrecResults results = new TrecResults();
+        for (Map.Entry<String, Double> entry : scores.entrySet()) {
+            if(!include_doc.contains(entry.getKey())){
+                results.getTrecResults().add(new TrecResult(
+                        topic,
+                        entry.getKey(),
+                        0,
+                        entry.getValue(),
+                        null
+                ));
+            }
+        }
+
+        // Sort the documents by the score assigned by the weighting model.
+        Collections.sort(results.getTrecResults());
+        Collections.reverse(results.getTrecResults());
 //
 //        // Assign the rank to the documents.
-//        for (int i = 0; i < results.getTrecResults().size(); i++) {
-//            results.getTrecResults().get(i).setRank(i + 1);
-//        }
+        for (int i = 0; i < results.getTrecResults().size(); i++) {
+            results.getTrecResults().get(i).setRank(i + 1);
+        }
 
-        return scores;
+        return results;
 
     }
 

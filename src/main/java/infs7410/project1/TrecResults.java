@@ -25,6 +25,10 @@ public class TrecResults {
         }
     }
 
+    public void SetTrecResult(int index, TrecResult result){
+        this.trecResults.set(index,result);
+    }
+
     public TrecResults(List<TrecResult> results) {
         this.trecResults = results;
     }
