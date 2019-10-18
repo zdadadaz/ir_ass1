@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -34,13 +34,13 @@ public class Project1 {
 
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//         String indexPath = "./var/index";
-//         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+         String indexPath = "./var/index";
+         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
 
-       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-       String indexPath = "./var/index";
-       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//       String indexPath = "./var/index";
+//       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
@@ -53,8 +53,8 @@ public class Project1 {
          * QueryReduction_resPath: path of init retrieved document set for KLI
          * fusionFlag: Switch for fusion 0 or 1
          */
-        String Case = "test";
-        String [] years ={"2017","2018"};
+        String Case = "train";
+        String [] years ={"2018"};
         String Query = "title";
         String [] QueryReductions = {"no"};
         double[] QueryReduction_ks = {0};
@@ -90,7 +90,7 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                    Double [] coefbm25_rsj = {0.45};
+                    Double [] coefbm25_rsj = {0.45,0.75};
 //                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
 //                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
                      training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./"+yearCasefolder+"/bm25_0.45_1.2_no0.0.res", coefbm25_rsj,qrels);
@@ -112,7 +112,7 @@ public class Project1 {
                      */
                     String inputFolder = "./"+yearCasefolder+"/";
                     evalution_set(qrels, inputFolder, trec_evalPath);
-
+                    TimeUnit.SECONDS.sleep(1);
                     /**
                      * T-test
                      * input: folder contains eval, output path
@@ -440,8 +440,12 @@ public class Project1 {
         for (File file : files) {
             String tmp = file.getName();
             if (!tmp.substring(0,1).equals(".")) {
-                 testList.add(file.getAbsolutePath());
+                 testList.add(file.getAbsolutePath().replace("./",""));
             }
+        }
+        File fdelet = new File(outPath.toString());
+        if(fdelet.exists()){
+            fdelet.delete();
         }
         HashMap<String, double[]> statall = new HashMap<>();
         for (int i =0; i<testList.size();i++) {

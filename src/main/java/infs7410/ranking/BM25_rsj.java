@@ -3,6 +3,8 @@ package infs7410.ranking;
 import org.terrier.matching.models.WeightingModel;
 import org.terrier.matching.models.WeightingModelLibrary;
 
+import java.util.ArrayList;
+
 public class BM25_rsj extends WeightingModel {
     /** The constant k_1.*/
     private double k_1 = 1.2d;
@@ -17,6 +19,10 @@ public class BM25_rsj extends WeightingModel {
 
     private double R;
 
+    private double docLength;
+
+    private double tf;
+
     /** A default constructor.*/
     public BM25_rsj() {
         super();
@@ -30,8 +36,20 @@ public class BM25_rsj extends WeightingModel {
         this.R = R;
         this.ri = ri;
     }
+    public ArrayList<Double> getData(){
+        ArrayList<Double> output = new ArrayList<>();
+        output.add(numberOfDocuments);
+        output.add(documentFrequency);
+        output.add(averageDocumentLength);
+        output.add(this.docLength);
+        output.add(this.tf);
+        output.add(keyFrequency);
+        return output;
+    }
 
     public double score(double tf, double docLength) {
+        this.docLength = docLength;
+        this.tf = tf;
         final double K = k_1 * ((1 - b) + b * docLength / averageDocumentLength);
         return WeightingModelLibrary.log((numberOfDocuments - documentFrequency - this.R + this.ri + 0.5d) / (documentFrequency - this.ri + 0.5d) * (this.ri + 0.5d)/(this.R - this.ri +0.5d)) *
                 ((k_1 + 1d) * tf / (K + tf)) *

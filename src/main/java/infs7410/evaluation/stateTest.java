@@ -42,6 +42,8 @@ public class stateTest {
             double[] scores2 = file2.getScoresForMeasure(measure[i]);
 
             if (scores1.length != scores2.length){
+                System.out.println(filename1);
+                System.out.println(filename2);
                 System.out.println("wrong");
             }
             // Create a new TTest object to perform significance testing.

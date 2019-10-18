@@ -1,6 +1,7 @@
 package infs7410.project1;
 
 import org.terrier.matching.models.WeightingModel;
+import org.terrier.matching.models.WeightingModelLibrary;
 import org.terrier.matching.models.basicmodel.In;
 import org.terrier.structures.*;
 import org.terrier.structures.postings.IterablePosting;
@@ -17,6 +18,9 @@ public class relevanceFeedback {
     private Index index;
 
     private HashMap<String,HashMap<String,Integer>> qrels;
+
+    // query-> docId-> ip
+    private HashMap<String, HashMap<String,ArrayList<Double>>> query_doc_ip;
 
     public relevanceFeedback(Index index) {
         this.index = index;
@@ -63,6 +67,9 @@ public class relevanceFeedback {
         bm25_rsj.setCollectionStatistics(index.getCollectionStatistics());
         HashSet<String> docIdSet = new HashSet<String>(docIds);
 
+        // declare query_doc_ip
+        this.query_doc_ip = new HashMap<>();
+
         //// calculate baseline result of R ////
         topic = topic.replace(" ","");
         HashMap<String, Integer> doc_map = baseResult.getDocByTopics(topic);
@@ -70,19 +77,23 @@ public class relevanceFeedback {
         for (Map.Entry<String, Integer> entry : doc_map.entrySet()) {
             doc_arr[entry.getValue() - 1] = entry.getKey(); // rank - 1 = position
         }
-        Integer [] doc_R = caculate_R(doc_arr, topic);
 
-        //// calculate baseline result of ri.
+        //// record ri and record every info. for each query term.
         //// <term, ri>
-        HashMap<String, HashSet<String>> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, doc_map, meta);
+        HashMap<String, HashSet<String>> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, docIdSet, meta,bm25_rsj);
 
         // init
-        TrecResults results = new TrecResults();
+        ArrayList<String> doclist = new ArrayList<>();
+        ArrayList<Double> scorelist = new ArrayList<>();
         TrecResults scores_new = baseResult;
         Set<String > include_doc = new HashSet<>();
-        include_doc.add(doc_arr[0]);
-        results.getTrecResults().add(scores_new.getTrecResults().get(0));
+        // init assign
+        scores_new = reranker(topic, queryTerms, docIdSet, doclist, 0,rihash, 0.45);
+        include_doc.add(scores_new.getTrecResults().get(0).getDocID());
+        doclist.add(scores_new.getTrecResults().get(0).getDocID());
+        scorelist.add(scores_new.getTrecResults().get(0).getScore());
         String pre_doc = scores_new.getTrecResults().get(0).getDocID();
+        docIdSet.remove(pre_doc);
         int curIndx = 1;
         Integer R = 0;
         //// run baseline result and re-rank
@@ -90,17 +101,30 @@ public class relevanceFeedback {
             // if R change then do re rank,
             if(isRelevance(topic,pre_doc)){
                 R += 1;
-                scores_new = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, R,rihash, i,include_doc);
+                scores_new = reranker(topic, queryTerms, docIdSet, doclist, R,rihash, bm25_rsj.getParameter());
                 curIndx = 0;
             }
             String cur_doc = scores_new.getTrecResults().get(curIndx).getDocID();
             // otherwise, use the old one to assign score and document
-            results.getTrecResults().add(scores_new.getTrecResults().get(curIndx));
+            doclist.add(cur_doc);
+            scorelist.add(scores_new.getTrecResults().get(curIndx).getScore());
             curIndx += 1;
             pre_doc = cur_doc;
             include_doc.add(cur_doc);
+            docIdSet.remove(cur_doc);
         }
 
+        TrecResults results = new TrecResults();
+        results.getTrecResults().clear();
+        for (int i = 0; i<doclist.size(); i++){
+            results.getTrecResults().add(new TrecResult(
+                    topic,
+                    doclist.get(i),
+                    i+1,
+                    scorelist.get(i),
+                    "bm25_rsj"
+            ));
+        }
         // Assign the rank to the documents.
         for (int i = 0; i < results.getTrecResults().size(); i++) {
             results.getTrecResults().get(i).setRank(i + 1);
@@ -110,48 +134,38 @@ public class relevanceFeedback {
         return results;
     }
 
-    public TrecResults reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer doc_R, HashMap<String, HashSet<String>> ri_hash,Integer rel_index,Set<String > include_doc) throws IOException {
+    public TrecResults reranker(String topic,ArrayList<String>  queryTerms,HashSet<String> docIdSet, ArrayList<String> doclist,Integer doc_R, HashMap<String, HashSet<String>> ri_hash, Double b) throws IOException {
         ////   reranker //////
         HashMap<String, Double> scores = new HashMap<>();
         // Iterate over all query terms.
         for (String queryTerm : queryTerms) {
-            LexiconEntry entry = lex.getLexiconEntry(queryTerm);
-            if (entry == null) {
+            if (!this.query_doc_ip.containsKey(queryTerm)) {
                 continue; // This term is not in the index, go to next document.
             }
 
             HashSet<String> ri_set = ri_hash.get(queryTerm);
-            Integer rank = rel_index;
             // accumulate ri from rank 1 to rank i, where i is current found document
             Integer ri = 0;
-            for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
-                if (ri_arr[rr] != null){
+            for (String dl: doclist){
+                if (ri_set.contains(dl)){
                     ri += 1;
                 }
             }
-            // Obtain entry statistics.
-            bm25_rsj.setEntryStatistics(entry.getWritableEntryStatistics());
-
-            // Set the number of times the query term appears in the query.
-            double kf = 0.0;
-            for (String otherTerm : queryTerms) {
-                if (otherTerm.equals(queryTerm)) {
-                    kf++;
-                }
+            if (ri> doc_R){
+                System.out.println("===================Wrong ri=====================================");
             }
-            bm25_rsj.setKeyFrequency(kf);
 
-            // Prepare the weighting model for scoring.
-            bm25_rsj.prepare();
-
-            IterablePosting ip = invertedIndex.getPostings(entry);
-            ip = invertedIndex.getPostings(entry);
+            // calculate score
             double score = 0.0;
-            while (ip.next() != IterablePosting.EOL) {
-                String docId = meta.getItem("docno", ip.getId());
+            HashMap<String,ArrayList<Double>> query_hash = this.query_doc_ip.get(queryTerm);
+            for(HashMap.Entry<String,ArrayList<Double>> m :query_hash.entrySet()){
+                String docId = m.getKey();
+//                if(docId.equals("9449869")){
+//                    System.out.println(queryTerm);
+//                    System.out.println("aa");
+//                }
                 if (docIdSet.contains(docId)) {
-                    bm25_rsj.set_R_ri(doc_R,ri);
-                    score = bm25_rsj.score(ip);
+                    score = bm25_rsj_calculate_score(queryTerm, docId, (double) doc_R, (double) ri,b);
                     if (!scores.containsKey(docId)) {
                         scores.put(docId, score);
                     } else {
@@ -171,7 +185,6 @@ public class relevanceFeedback {
 //        // Create a results list from the scored documents.
         TrecResults results = new TrecResults();
         for (Map.Entry<String, Double> entry : scores.entrySet()) {
-            if(!include_doc.contains(entry.getKey())){
                 results.getTrecResults().add(new TrecResult(
                         topic,
                         entry.getKey(),
@@ -179,7 +192,6 @@ public class relevanceFeedback {
                         entry.getValue(),
                         null
                 ));
-            }
         }
 
         // Sort the documents by the score assigned by the weighting model.
@@ -195,30 +207,75 @@ public class relevanceFeedback {
 
     }
 
-    public HashMap<String, HashSet<String>> calculate_ri(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,HashMap<String, Integer> doc_map,MetaIndex meta) throws IOException {
+    public Double bm25_rsj_calculate_score(String query,String docId, Double R, Double ri,Double b){
+        ArrayList<Double> data = this.query_doc_ip.get(query).get(docId);
+        double k_1 = 1.2d;
+        double k_3 = 8d;
+        double numberOfDocuments = data.get(0);
+        double documentFrequency = data.get(1);
+        double averageDocumentLength = data.get(2);
+        double docLength = data.get(3);
+        double tf = data.get(4);
+        double keyFrequency = data.get(5);
+        final double K = k_1 * ((1 - b) + b * docLength / averageDocumentLength);
+        return WeightingModelLibrary.log((numberOfDocuments - documentFrequency - R + ri + 0.5d) / (documentFrequency - ri + 0.5d) * (ri + 0.5d)/(R - ri +0.5d)) *
+                ((k_1 + 1d) * tf / (K + tf)) *
+                ((k_3+1)*keyFrequency/(k_3+keyFrequency)) * data.get(6);
+    }
+
+    public HashMap<String, HashSet<String>> calculate_ri(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,HashSet<String> doc_map,MetaIndex meta, BM25_rsj bm25_rsj) throws IOException {
         HashMap<String, HashSet<String>> output = new HashMap<>();
         for (String queryTerm : queryTerms) {
             LexiconEntry entry = lex.getLexiconEntry(queryTerm);
             if (entry == null) {
                 continue; // This term is not in the index, go to next document.
             }
+            bm25_rsj.setEntryStatistics(entry.getWritableEntryStatistics());
+            // Set the number of times the query term appears in the query.
+            double kf = 0.0;
+            for (String otherTerm : queryTerms) {
+                if (otherTerm.equals(queryTerm)) {
+                    kf++;
+                }
+            }
+            bm25_rsj.setKeyFrequency(kf);
 
+            // Prepare the weighting model for scoring.
+            bm25_rsj.prepare();
+
+            HashMap<String,ArrayList<Double>> query_hash = new HashMap<>();
+            this.query_doc_ip.put(queryTerm,query_hash);
+
+            // check query_hash is call by reference
             // Calculate ri: document frequecy within relevant documents R.
             IterablePosting ip = invertedIndex.getPostings(entry);
-            HashSet<String> ri_arr = getDocumentFreq(ip, meta, doc_map, topic);
+            HashSet<String> ri_arr = getDocumentFreq(ip, meta, doc_map, topic,bm25_rsj,query_hash,queryTerm);
             output.put(queryTerm,ri_arr);
         }
         return output;
     }
 
-    public HashSet<String> getDocumentFreq(IterablePosting ip, MetaIndex meta, HashMap<String, Integer> doc_map_hash, String Topic) throws IOException {
+    public HashSet<String> getDocumentFreq(IterablePosting ip, MetaIndex meta, HashSet<String> doc_map_hash, String Topic,BM25_rsj bm25_rsj,HashMap<String,ArrayList<Double>> query_hash, String queryTerm) throws IOException {
         //    ri contain in doc_map && rank < cur_rank
+
         HashSet<String> doc_ri = new HashSet<String>();
         while (ip.next() != IterablePosting.EOL) {
             String docId = meta.getItem("docno", ip.getId());
-            if (doc_map_hash.containsKey(docId) && isRelevance(Topic,docId)) {
-                doc_ri.add(docId);
+            if (doc_map_hash.contains(docId)){
+                bm25_rsj.score(ip);
+                ArrayList<Double> tmp = bm25_rsj.getData();
+                tmp.add(1.0);
+                if(query_hash.containsKey(docId)){
+                    tmp = query_hash.get(docId);
+                    tmp.set(6,tmp.get(6)+1);
+                }else {
+                    query_hash.put(docId,tmp);
+                }
+                if (isRelevance(Topic,docId)) {
+                    doc_ri.add(docId);
+                }
             }
+
         }
         return doc_ri;
     }
