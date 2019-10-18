@@ -74,7 +74,7 @@ public class relevanceFeedback {
 
         //// calculate baseline result of ri.
         //// <term, ri>
-        HashMap<String, Integer []> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, doc_map, meta);
+        HashMap<String, HashSet<String>> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, doc_map, meta);
 
         // init
         TrecResults results = new TrecResults();
@@ -82,19 +82,22 @@ public class relevanceFeedback {
         Set<String > include_doc = new HashSet<>();
         include_doc.add(doc_arr[0]);
         results.getTrecResults().add(scores_new.getTrecResults().get(0));
-
-        int curIndx = 0;
+        String pre_doc = scores_new.getTrecResults().get(0).getDocID();
+        int curIndx = 1;
+        Integer R = 0;
         //// run baseline result and re-rank
         for (int i = 1; i<doc_arr.length; i++){
-            String cur_doc = doc_arr[i];
             // if R change then do re rank,
-            if (doc_R[i] != 0 && doc_R[i] != doc_R[i-1]) {
-                scores_new = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, doc_R,rihash, i,include_doc);
+            if(isRelevance(topic,pre_doc)){
+                R += 1;
+                scores_new = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, R,rihash, i,include_doc);
                 curIndx = 0;
             }
+            String cur_doc = scores_new.getTrecResults().get(curIndx).getDocID();
             // otherwise, use the old one to assign score and document
             results.getTrecResults().add(scores_new.getTrecResults().get(curIndx));
             curIndx += 1;
+            pre_doc = cur_doc;
             include_doc.add(cur_doc);
         }
 
@@ -107,7 +110,7 @@ public class relevanceFeedback {
         return results;
     }
 
-    public TrecResults reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer [] doc_R, HashMap<String, Integer []> ri_hash,Integer rel_index,Set<String > include_doc) throws IOException {
+    public TrecResults reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer doc_R, HashMap<String, HashSet<String>> ri_hash,Integer rel_index,Set<String > include_doc) throws IOException {
         ////   reranker //////
         HashMap<String, Double> scores = new HashMap<>();
         // Iterate over all query terms.
@@ -117,7 +120,7 @@ public class relevanceFeedback {
                 continue; // This term is not in the index, go to next document.
             }
 
-            Integer [] ri_arr = ri_hash.get(queryTerm);
+            HashSet<String> ri_set = ri_hash.get(queryTerm);
             Integer rank = rel_index;
             // accumulate ri from rank 1 to rank i, where i is current found document
             Integer ri = 0;
@@ -147,8 +150,7 @@ public class relevanceFeedback {
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
-//                    System.out.println(doc_R[rank].toString() + ri.toString());
-                    bm25_rsj.set_R_ri(doc_R[rank-1],ri);
+                    bm25_rsj.set_R_ri(doc_R,ri);
                     score = bm25_rsj.score(ip);
                     if (!scores.containsKey(docId)) {
                         scores.put(docId, score);
@@ -193,8 +195,8 @@ public class relevanceFeedback {
 
     }
 
-    public HashMap<String, Integer []> calculate_ri(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,HashMap<String, Integer> doc_map,MetaIndex meta) throws IOException {
-        HashMap<String, Integer []> output = new HashMap<>();
+    public HashMap<String, HashSet<String>> calculate_ri(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,HashMap<String, Integer> doc_map,MetaIndex meta) throws IOException {
+        HashMap<String, HashSet<String>> output = new HashMap<>();
         for (String queryTerm : queryTerms) {
             LexiconEntry entry = lex.getLexiconEntry(queryTerm);
             if (entry == null) {
@@ -203,19 +205,19 @@ public class relevanceFeedback {
 
             // Calculate ri: document frequecy within relevant documents R.
             IterablePosting ip = invertedIndex.getPostings(entry);
-            Integer[] ri_arr = getDocumentFreq(ip, meta, doc_map, topic);
+            HashSet<String> ri_arr = getDocumentFreq(ip, meta, doc_map, topic);
             output.put(queryTerm,ri_arr);
         }
         return output;
     }
 
-    public Integer[] getDocumentFreq(IterablePosting ip, MetaIndex meta, HashMap<String, Integer> doc_map_hash, String Topic) throws IOException {
+    public HashSet<String> getDocumentFreq(IterablePosting ip, MetaIndex meta, HashMap<String, Integer> doc_map_hash, String Topic) throws IOException {
         //    ri contain in doc_map && rank < cur_rank
-        Integer[] doc_ri = new Integer[doc_map_hash.size()];
+        HashSet<String> doc_ri = new HashSet<String>();
         while (ip.next() != IterablePosting.EOL) {
             String docId = meta.getItem("docno", ip.getId());
             if (doc_map_hash.containsKey(docId) && isRelevance(Topic,docId)) {
-                doc_ri[doc_map_hash.get(docId) - 1] = 1; // rank -1 = position
+                doc_ri.add(docId);
             }
         }
         return doc_ri;
