@@ -76,40 +76,97 @@ public class relevanceFeedback {
         //// <term, ri>
         HashMap<String, Integer []> rihash = calculate_ri( topic,queryTerms, lex, invertedIndex, doc_map, meta);
 
+        //// calculate scores when R is different
+        ArrayList<Integer> rel_change = new ArrayList<>();
+        Set<Integer> rel_change_set = new HashSet<>();
+        // first element is relevant
+        if (doc_R[0] == 1){
+            rel_change.add(1);
+            rel_change_set.add(1);
+        }
+        // record relevance index when increase
+        for (int q = 1; q < doc_R.length; q++){
+            if (doc_R[q] != doc_R[q-1]){
+                rel_change.add(q+1);
+                rel_change_set.add(q+1);
+            }
+        }
+        ArrayList<TrecResults> scores_news = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, doc_R,rihash, rel_change);
+        Integer count_scores_news = 0;
+
         // init
         TrecResults results = new TrecResults();
         TrecResults scores_new = baseResult;
         Set<String > include_doc = new HashSet<>();
         include_doc.add(doc_arr[0]);
-        results.getTrecResults().add(scores_new.getTrecResults().get(0));
+//        results.getTrecResults().add(scores_new.getTrecResults().get(0));
 
-        int curIndx = 0;
+        ArrayList<String> doclist = new ArrayList<>();
+        ArrayList<Double> scorelist = new ArrayList<>();
+        doclist.add(doc_arr[0]);
+        scorelist.add(scores_new.getTrecResults().get(0).getScore());
+
+        int curIndx = 1;
         //// run baseline result and re-rank
         for (int i = 1; i<doc_arr.length; i++){
-            String cur_doc = doc_arr[i];
-            // if R change then do re rank,
-            if (doc_R[i] != 0 && doc_R[i] != doc_R[i-1]) {
-                scores_new = reranker(topic, queryTerms, lex, invertedIndex, bm25_rsj, meta, docIdSet, doc_map, doc_R,rihash, i,include_doc);
+            // if R change or relevance at 1st place then do re rank,
+//            if ((doc_R[i] != 0 && doc_R[i] != doc_R[i-1]) || (doc_R[0] != 0 && i == 1)){
+            if(rel_change_set.contains(i)){
+                scores_new = scores_news.get(count_scores_news);
+                count_scores_news += 1;
                 curIndx = 0;
             }
+
             // otherwise, use the old one to assign score and document
-            results.getTrecResults().add(scores_new.getTrecResults().get(curIndx));
-            curIndx += 1;
-            include_doc.add(cur_doc);
+            for (int qq = 0; qq < scores_new.getTrecResults().size();qq++){
+                String tmp_doc = scores_new.getTrecResults().get(curIndx).getDocID();
+                TrecResult add_doc = scores_new.getTrecResults().get(curIndx);
+                if(!include_doc.contains(add_doc.getDocID())){
+//                    results.getTrecResults().add(add_doc);
+
+                    doclist.add(add_doc.getDocID());
+                    scorelist.add(add_doc.getScore());
+
+                    curIndx += 1;
+                    include_doc.add(add_doc.getDocID());
+                    break;
+                }
+                else{
+                    curIndx += 1;
+                }
+            }
+
+        }
+        results.getTrecResults().clear();
+        for (int i = 0; i<doclist.size(); i++){
+            results.getTrecResults().add(new TrecResult(
+                    topic,
+                    doclist.get(i),
+                    i+1,
+                    scorelist.get(i),
+                    "bm25_rsj"
+            ));
         }
 
+
         // Assign the rank to the documents.
-        for (int i = 0; i < results.getTrecResults().size(); i++) {
-            results.getTrecResults().get(i).setRank(i + 1);
-            results.getTrecResults().get(i).setRunName("bm25_rsj");
-        }
+//        for (int i = 0; i < results.getTrecResults().size(); i++) {
+//            results.getTrecResults().get(i).setRank(i + 1);
+//            results.getTrecResults().get(i).setRunName("bm25_rsj");
+//        }
 
         return results;
     }
 
-    public TrecResults reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer [] doc_R, HashMap<String, Integer []> ri_hash,Integer rel_index,Set<String > include_doc) throws IOException {
+    public ArrayList<TrecResults> reranker(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,BM25_rsj bm25_rsj,MetaIndex meta,HashSet<String> docIdSet, HashMap<String, Integer> doc_map,Integer [] doc_R, HashMap<String, Integer []> ri_hash,ArrayList<Integer> rel_indexs) throws IOException {
         ////   reranker //////
-        HashMap<String, Double> scores = new HashMap<>();
+        ArrayList<HashMap<String, Double>> scores_arr = new ArrayList<>();
+        // declare output
+        for (Integer rel_i : rel_indexs){
+            HashMap<String, Double> scores = new HashMap<>();
+            scores_arr.add(scores);
+        }
+
         // Iterate over all query terms.
         for (String queryTerm : queryTerms) {
             LexiconEntry entry = lex.getLexiconEntry(queryTerm);
@@ -117,15 +174,21 @@ public class relevanceFeedback {
                 continue; // This term is not in the index, go to next document.
             }
 
-            Integer [] ri_arr = ri_hash.get(queryTerm);
-            Integer rank = rel_index;
-            // accumulate ri from rank 1 to rank i, where i is current found document
-            Integer ri = 0;
-            for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
-                if (ri_arr[rr] != null){
-                    ri += 1;
+            ArrayList<Integer> ri_arr4calc = new ArrayList<>();
+            for (Integer rel_i : rel_indexs){
+                Integer [] ri_arr = ri_hash.get(queryTerm);
+                Integer rank = rel_i;
+                // accumulate ri from rank 1 to rank i, where i is current found document
+                Integer ri = 0;
+                for (int rr = 0; rr < rank ; rr ++){ // rank - 1 == positio
+                    if (ri_arr[rr] != null){
+                        ri += 1;
+                    }
                 }
+                ri_arr4calc.add(ri);
             }
+
+
             // Obtain entry statistics.
             bm25_rsj.setEntryStatistics(entry.getWritableEntryStatistics());
 
@@ -147,29 +210,39 @@ public class relevanceFeedback {
             while (ip.next() != IterablePosting.EOL) {
                 String docId = meta.getItem("docno", ip.getId());
                 if (docIdSet.contains(docId)) {
-//                    System.out.println(doc_R[rank].toString() + ri.toString());
-                    bm25_rsj.set_R_ri(doc_R[rank-1],ri);
-                    score = bm25_rsj.score(ip);
-                    if (!scores.containsKey(docId)) {
-                        scores.put(docId, score);
-                    } else {
-                        scores.put(docId, scores.get(docId) + score);
+                    for (Integer ii = 0; ii < rel_indexs.size(); ii++){
+//                        System.out.println(doc_R[rel_indexs.get(ii)-1].toString() + ri_arr4calc.get(ii).toString());
+                        bm25_rsj.set_R_ri(doc_R[rel_indexs.get(ii)-1],ri_arr4calc.get(ii));
+                        score = bm25_rsj.score(ip);
+                        // by reference or value
+                        HashMap<String, Double> scores = scores_arr.get(ii);
+                        if (!scores.containsKey(docId)) {
+                            scores.put(docId, score);
+                        } else {
+                            scores.put(docId, scores.get(docId) + score);
+                        }
                     }
+
                 }
             }
         }
         // Set score to 0 for docs that do not contain any term.
-        for (String id : docIdSet) {
-            if (!scores.containsKey(id)) {
-                scores.put(id, 0.0);
+        for (Integer ii = 0; ii < rel_indexs.size(); ii++){
+            HashMap<String, Double> scores = scores_arr.get(ii);
+            for (String id : docIdSet) {
+                if (!scores.containsKey(id)) {
+                    scores.put(id, 0.0);
+                }
             }
         }
 
 
-//        // Create a results list from the scored documents.
-        TrecResults results = new TrecResults();
-        for (Map.Entry<String, Double> entry : scores.entrySet()) {
-            if(!include_doc.contains(entry.getKey())){
+        ArrayList<TrecResults> output = new ArrayList<>();
+        for (Integer ii = 0; ii < rel_indexs.size(); ii++){
+            HashMap<String, Double> scores = scores_arr.get(ii);
+            //        // Create a results list from the scored documents.
+            TrecResults results = new TrecResults();
+            for (Map.Entry<String, Double> entry : scores.entrySet()) {
                 results.getTrecResults().add(new TrecResult(
                         topic,
                         entry.getKey(),
@@ -178,18 +251,23 @@ public class relevanceFeedback {
                         null
                 ));
             }
+            output.add(results);
         }
 
-        // Sort the documents by the score assigned by the weighting model.
-        Collections.sort(results.getTrecResults());
-        Collections.reverse(results.getTrecResults());
+        for (Integer ii = 0; ii < rel_indexs.size(); ii++){
+            TrecResults results = output.get(ii);
+            // Sort the documents by the score assigned by the weighting model.
+            Collections.sort(results.getTrecResults());
+            Collections.reverse(results.getTrecResults());
 //
 //        // Assign the rank to the documents.
-        for (int i = 0; i < results.getTrecResults().size(); i++) {
-            results.getTrecResults().get(i).setRank(i + 1);
+            for (int i = 0; i < results.getTrecResults().size(); i++) {
+                results.getTrecResults().get(i).setRank(i + 1);
+            }
         }
 
-        return results;
+
+        return output;
 
     }
 

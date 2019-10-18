@@ -34,13 +34,13 @@ public class Project1 {
 
     public static void main(String[] args) throws Exception {
 //      the path of folder containing runs and tar folders
-//         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
-//         String indexPath = "./var/index";
-//         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
+         String dirPath = "/home/zdadadaz/Desktop/course/INFS7401/ass1/";
+         String indexPath = "./var/index";
+         String trec_evalPath = "/home/zdadadaz/Desktop/course/INFS7401/trec_eval/trec_eval";
 
-       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
-       String indexPath = "./var/index";
-       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
+//       String dirPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/ass1/";
+//       String indexPath = "./var/index";
+//       String trec_evalPath = "/Users/chienchichen/Desktop/UQ/course/INFS7410_ir/trec_eval/trec_eval";
         File file;
         BasicConfigurator.configure();
         /**
