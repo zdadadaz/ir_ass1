@@ -54,7 +54,7 @@ public class Project1 {
          * fusionFlag: Switch for fusion 0 or 1
          */
         String Case = "train";
-        String [] years ={"2018"};
+        String [] years ={"2017","2018"};
         String Query = "title";
         String [] QueryReductions = {"no"};
         double[] QueryReduction_ks = {0};
@@ -143,10 +143,12 @@ public class Project1 {
      * @param coef array of adjust coeficient if exist
      * @require {@code path != null,RunName != null,outName != null, coef != null}
      */
-    public static void training_relevanceFeedbck(String indexPath, String path, String RunName, String outName,String baselinePath, Double [] coef, String qrelsPath) throws IOException {
+    public static void training_relevanceFeedbck(String indexPath, String path, String RunName, String outName,String baselinePath, Double [] coef, String qrelsPath) throws Exception {
         Index index = Index.createIndex(indexPath, "pubmed");
         InputFile Alltopic = new InputFile(path);
         String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
+        String QueryReduction = "KLI";
+        double QueryReduction_k = 0.3;
 
 //      read index, qrels, and res file from baseline
         BM25_rsj alg = new BM25_rsj();
@@ -173,13 +175,23 @@ public class Project1 {
                 System.out.println("filename: "+ tmpTopic.getFilename());
                 System.out.println("Topic: "+ tmpTopic.getTopic());
                 System.out.println("Title: "+ tmpTopic.getTitle());
-                System.out.println("Query: "+ tmpTopic.getQuery());
+//                System.out.println("Query: "+ tmpTopic.getQuery());
                 ArrayList<String> tmpQuery;
+
+                // expansion & reduction
                 queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
+                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                }else{
+                    tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
+                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
+                }
+                System.out.println("output query: "+tmpQuery.toString());
 
                 TrecResults results = rf.runBM25_RSJ(
                         tmpTopic.getTopic(),
-                        tmpTopic.getTitle(),
+//                        tmpTopic.getTitle(),
+                        tmpQuery,
                         tmpTopic.getPid(),
                         baseResults,
                         alg);

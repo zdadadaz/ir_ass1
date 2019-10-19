@@ -35,7 +35,8 @@ public class queryProcess {
             tmpS = ps.stem(tmpS);
             if (!this.queryList.contains(tmpS)){
 //                this.queryList.add(ps.stem(tmpS));
-                this.expandQeuryOne(s);
+                String tmp = s+"*";
+                this.expandQeuryOne(tmp);
             }
             if(!termslist.contains(tmpS)){
                 output.add(tmpS);
@@ -167,7 +168,7 @@ public class queryProcess {
                 for (File f : contents) {
                     if (f.getName().endsWith(".qr")){
                         String[] tmp = f.getName().split("_");
-                        String tmp1 = tmp[1].substring(0,tmp[1].length()-3);
+                        String tmp1 = tmp[tmp.length-1].substring(0,tmp[tmp.length-1].length()-3);
                         tmp1 = tmp1.replaceAll(" ","");
                         if (!tmp1.isEmpty()){
                             fileNameList.add(tmp1);
