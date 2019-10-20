@@ -179,19 +179,19 @@ public class Project1 {
                 ArrayList<String> tmpQuery;
 
                 // expansion & reduction
-                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
-                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
-                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
-                }else{
-                    tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
-                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-                }
-                System.out.println("output query: "+tmpQuery.toString());
+//                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
+//                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+//                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+//                }else{
+//                    tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
+//                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
+//                }
+//                System.out.println("output query: "+tmpQuery.toString());
 
                 TrecResults results = rf.runBM25_RSJ(
                         tmpTopic.getTopic(),
-//                        tmpTopic.getTitle(),
-                        tmpQuery,
+                        tmpTopic.getTitle(),
+//                        tmpQuery,
                         tmpTopic.getPid(),
                         baseResults,
                         alg);

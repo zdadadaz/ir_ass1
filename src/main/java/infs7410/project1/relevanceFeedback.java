@@ -21,6 +21,7 @@ public class relevanceFeedback {
 
     // query-> docId-> ip
     private HashMap<String, HashMap<String,ArrayList<Double>>> query_doc_ip;
+    private HashMap<String, ArrayList<ArrayList<Double>>> repeat_doc_ip;
 
     public relevanceFeedback(Index index) {
         this.index = index;
@@ -69,6 +70,7 @@ public class relevanceFeedback {
 
         // declare query_doc_ip
         this.query_doc_ip = new HashMap<>();
+        this.repeat_doc_ip = new HashMap<>();
 
         //// calculate baseline result of R ////
         topic = topic.replace(" ","");
@@ -160,10 +162,10 @@ public class relevanceFeedback {
             HashMap<String,ArrayList<Double>> query_hash = this.query_doc_ip.get(queryTerm);
             for(HashMap.Entry<String,ArrayList<Double>> m :query_hash.entrySet()){
                 String docId = m.getKey();
-//                if(docId.equals("9449869")){
-//                    System.out.println(queryTerm);
-//                    System.out.println("aa");
-//                }
+                if(docId.equals("25085796")){
+                    System.out.println(queryTerm);
+                    System.out.println("aa");
+                }
                 if (docIdSet.contains(docId)) {
                     score = bm25_rsj_calculate_score(queryTerm, docId, (double) doc_R, (double) ri,b);
                     if (!scores.containsKey(docId)) {
@@ -209,6 +211,18 @@ public class relevanceFeedback {
 
     public Double bm25_rsj_calculate_score(String query,String docId, Double R, Double ri,Double b){
         ArrayList<Double> data = this.query_doc_ip.get(query).get(docId);
+        double score = 0;
+        score = bm25_rsj_calculate_score_data(data, R, ri, b);
+        if (data.get(6) >1){
+            ArrayList<ArrayList<Double>> tmp = this.repeat_doc_ip.get(query+docId);
+            for (ArrayList<Double> t : tmp){
+                score+= bm25_rsj_calculate_score_data(t, R, ri, b);
+            }
+        }
+        return score;
+    }
+
+    public Double bm25_rsj_calculate_score_data(ArrayList<Double> data, Double R, Double ri,Double b){
         double k_1 = 1.2d;
         double k_3 = 8d;
         double numberOfDocuments = data.get(0);
@@ -220,8 +234,9 @@ public class relevanceFeedback {
         final double K = k_1 * ((1 - b) + b * docLength / averageDocumentLength);
         return WeightingModelLibrary.log((numberOfDocuments - documentFrequency - R + ri + 0.5d) / (documentFrequency - ri + 0.5d) * (ri + 0.5d)/(R - ri +0.5d)) *
                 ((k_1 + 1d) * tf / (K + tf)) *
-                ((k_3+1)*keyFrequency/(k_3+keyFrequency)) * data.get(6);
+                ((k_3+1)*keyFrequency/(k_3+keyFrequency));
     }
+
 
     public HashMap<String, HashSet<String>> calculate_ri(String topic,ArrayList<String>  queryTerms, Lexicon lex, PostingIndex invertedIndex,HashSet<String> doc_map,MetaIndex meta, BM25_rsj bm25_rsj) throws IOException {
         HashMap<String, HashSet<String>> output = new HashMap<>();
@@ -262,10 +277,21 @@ public class relevanceFeedback {
         while (ip.next() != IterablePosting.EOL) {
             String docId = meta.getItem("docno", ip.getId());
             if (doc_map_hash.contains(docId)){
-                bm25_rsj.score(ip);
+                double score = bm25_rsj.score(ip);
                 ArrayList<Double> tmp = bm25_rsj.getData();
                 tmp.add(1.0);
+                if(docId.equals("25085796")){
+                    System.out.println(queryTerm);
+                    System.out.println(score);
+                }
                 if(query_hash.containsKey(docId)){
+                    if (this.repeat_doc_ip.containsKey(queryTerm+docId)){
+                        this.repeat_doc_ip.get(queryTerm+docId).add(tmp);
+                    }else{
+                        ArrayList<ArrayList<Double>> newTmp = new ArrayList<>();
+                        newTmp.add(tmp);
+                        this.repeat_doc_ip.put(queryTerm+docId,newTmp);
+                    }
                     tmp = query_hash.get(docId);
                     tmp.set(6,tmp.get(6)+1);
                 }else {
