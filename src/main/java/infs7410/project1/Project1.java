@@ -53,8 +53,8 @@ public class Project1 {
          * QueryReduction_resPath: path of init retrieved document set for KLI
          * fusionFlag: Switch for fusion 0 or 1
          */
-        String Case = "train";
-        String [] years ={"2017","2018"};
+        String Case = "test";
+        String [] years ={"2017"};
         String Query = "title";
         String [] QueryReductions = {"no"};
         double[] QueryReduction_ks = {0};
@@ -90,7 +90,7 @@ public class Project1 {
 //        Double [] coefbm25 = {0.45,0.55,0.65,0.75,0.9};
                     Double [] coef = {1.0};
                     Double [] coefbm25 = {0.45};
-                    Double [] coefbm25_rsj = {0.45,0.75};
+                    Double [] coefbm25_rsj = {0.45};
 //                     training(indexPath, path, "tfidf", "./"+yearCasefolder+"/" + "tfidf.res", coef, Query,QueryReduction, QueryReduction_k);
 //                     training(indexPath, path, "bm25", "./"+yearCasefolder+"/" + "bm25.res", coefbm25, Query,QueryReduction, QueryReduction_k);
                      training_relevanceFeedbck(indexPath, path,"rf","./"+yearCasefolder+"/" + "relevancefeedback.res","./"+yearCasefolder+"/bm25_0.45_1.2_no0.0.res", coefbm25_rsj,qrels);
@@ -148,7 +148,7 @@ public class Project1 {
         InputFile Alltopic = new InputFile(path);
         String queryFolder = outName.substring(0,outName.lastIndexOf("/"));
         String QueryReduction = "KLI";
-        double QueryReduction_k = 0.3;
+        double QueryReduction_k = 0.85;
 
 //      read index, qrels, and res file from baseline
         BM25_rsj alg = new BM25_rsj();
@@ -179,14 +179,14 @@ public class Project1 {
                 ArrayList<String> tmpQuery;
 
                 // expansion & reduction
-//                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
-//                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
-//                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
-//                }else{
-//                    tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
-//                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
-//                }
-//                System.out.println("output query: "+tmpQuery.toString());
+                queryProcess qp = new queryProcess(queryFolder,tmpTopic.getPid());
+                if (qp.HasBooleanQuery(tmpTopic.getTopic())){
+                    tmpQuery = qp.GetBooleanQuery(tmpTopic.getTopic());
+                }else{
+                    tmpQuery = qp.expandQeury(tmpTopic.getTitle(),QueryReduction_k,QueryReduction);
+                    writeString(tmpQuery,outNameTmp.toString().substring(0,outNameTmp.toString().length()-4)+"_"+tmpTopic.getTopic()+".qr");
+                }
+                System.out.println("output query: "+tmpQuery.toString());
 
                 TrecResults results = rf.runBM25_RSJ(
                         tmpTopic.getTopic(),

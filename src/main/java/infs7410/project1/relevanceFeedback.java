@@ -162,10 +162,10 @@ public class relevanceFeedback {
             HashMap<String,ArrayList<Double>> query_hash = this.query_doc_ip.get(queryTerm);
             for(HashMap.Entry<String,ArrayList<Double>> m :query_hash.entrySet()){
                 String docId = m.getKey();
-                if(docId.equals("25085796")){
-                    System.out.println(queryTerm);
-                    System.out.println("aa");
-                }
+//                if(docId.equals("25085796")){
+//                    System.out.println(queryTerm);
+//                    System.out.println("aa");
+//                }
                 if (docIdSet.contains(docId)) {
                     score = bm25_rsj_calculate_score(queryTerm, docId, (double) doc_R, (double) ri,b);
                     if (!scores.containsKey(docId)) {
@@ -280,10 +280,10 @@ public class relevanceFeedback {
                 double score = bm25_rsj.score(ip);
                 ArrayList<Double> tmp = bm25_rsj.getData();
                 tmp.add(1.0);
-                if(docId.equals("25085796")){
-                    System.out.println(queryTerm);
-                    System.out.println(score);
-                }
+//                if(docId.equals("25085796")){
+//                    System.out.println(queryTerm);
+//                    System.out.println(score);
+//                }
                 if(query_hash.containsKey(docId)){
                     if (this.repeat_doc_ip.containsKey(queryTerm+docId)){
                         this.repeat_doc_ip.get(queryTerm+docId).add(tmp);
